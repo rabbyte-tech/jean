@@ -9,9 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ai-agent/shared": "workspace:*",
+    "prism-react-renderer": "^2.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@ai-agent/shared": "workspace:*"
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

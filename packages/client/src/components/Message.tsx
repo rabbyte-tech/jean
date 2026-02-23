@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { Message as MessageType, ContentBlock, ToolCallBlock, ToolResultBlock } from '@ai-agent/shared';
+import { MarkdownRenderer } from './MarkdownRenderer';
 import './Message.css';
 
 interface Props {
@@ -68,33 +70,105 @@ function groupToolCallsAndResults(content: ContentBlock[]): ContentItem[] {
   return result;
 }
 
+// Collapsible tool block component for grouped_tool items
+function ToolBlock({ toolCall, toolResult }: { toolCall: ToolCallBlock; toolResult: ToolResultBlock | null }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Format args preview (truncate to ~50 chars)
+  const argsPreview = JSON.stringify(toolCall.args);
+  const truncatedArgs = argsPreview.length > 50 ? argsPreview.slice(0, 47) + '...' : argsPreview;
+  
+  return (
+    <div className={`tool-group-block ${toolCall.pending ? 'pending' : ''}`}>
+      <div 
+        className="tool-header clickable" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span className="tool-chevron">{isExpanded ? '▼' : '▶'}</span>
+        <span className="tool-name">🔧 {toolCall.toolName}</span>
+        {!isExpanded && <span className="tool-args-preview">{truncatedArgs}</span>}
+        {toolCall.pending && <span className="tool-status">⏳ Executing...</span>}
+      </div>
+      
+      {isExpanded && (
+        <>
+          <div className="tool-args-section">
+            <div className="tool-args-label">Arguments:</div>
+            <pre className="tool-args">{JSON.stringify(toolCall.args, null, 2)}</pre>
+          </div>
+          {toolResult && (
+            <div className={`tool-result-section ${toolResult.isError ? 'error' : ''}`}>
+              <div className="tool-result-label">Result:</div>
+              <pre className="tool-result-content">
+                {typeof toolResult.result === 'string' 
+                  ? toolResult.result 
+                  : JSON.stringify(toolResult.result, null, 2)}
+              </pre>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// Collapsible tool call block (for non-grouped tool_call blocks)
+function CollapsibleToolCallBlock({ block }: { block: ToolCallBlock }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const argsPreview = JSON.stringify(block.args);
+  const truncatedArgs = argsPreview.length > 50 ? argsPreview.slice(0, 47) + '...' : argsPreview;
+  
+  return (
+    <div className={`tool-call-block ${block.pending ? 'pending' : ''}`}>
+      <div 
+        className="tool-header clickable" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span className="tool-chevron">{isExpanded ? '▼' : '▶'}</span>
+        <span className="tool-name">🔧 {block.toolName}</span>
+        {!isExpanded && <span className="tool-args-preview">{truncatedArgs}</span>}
+        {block.pending && <span className="tool-status">⏳ Executing...</span>}
+      </div>
+      
+      {isExpanded && (
+        <pre className="tool-args">{JSON.stringify(block.args, null, 2)}</pre>
+      )}
+    </div>
+  );
+}
+
+// Collapsible tool result block (for non-grouped tool_result blocks)
+function CollapsibleToolResultBlock({ block }: { block: ToolResultBlock }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <div className={`tool-result-block ${block.isError ? 'error' : ''}`}>
+      <div 
+        className="tool-header clickable" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span className="tool-chevron">{isExpanded ? '▼' : '▶'}</span>
+        <span className="tool-name">📤 Result</span>
+      </div>
+      
+      {isExpanded && (
+        <pre className="result-content">
+          {typeof block.result === 'string' 
+            ? block.result 
+            : JSON.stringify(block.result, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
 function ContentBlockComponent({ item }: { item: ContentItem }) {
   
   // Handle grouped tool call + result
   if (item.type === 'grouped_tool') {
     const { toolCall, toolResult } = item;
-    return (
-      <div className={`tool-group-block ${toolCall.pending ? 'pending' : ''}`}>
-        <div className="tool-header">
-          <span className="tool-name">🔧 {toolCall.toolName}</span>
-          {toolCall.pending && <span className="tool-status">⏳ Executing...</span>}
-        </div>
-        <div className="tool-args-section">
-          <div className="tool-args-label">Arguments:</div>
-          <pre className="tool-args">{JSON.stringify(toolCall.args, null, 2)}</pre>
-        </div>
-        {toolResult && (
-          <div className={`tool-result-section ${toolResult.isError ? 'error' : ''}`}>
-            <div className="tool-result-label">Result:</div>
-            <pre className="tool-result-content">
-              {typeof toolResult.result === 'string' 
-                ? toolResult.result 
-                : JSON.stringify(toolResult.result, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
-    );
+    return <ToolBlock toolCall={toolCall} toolResult={toolResult} />;
   }
   
   // Handle regular content blocks
@@ -102,34 +176,21 @@ function ContentBlockComponent({ item }: { item: ContentItem }) {
   
   switch (block.type) {
     case 'text':
-      return <div className="text-block">{block.text || '...'}</div>;
+      return (
+        <div className="text-block">
+          <MarkdownRenderer>{block.text || '...'}</MarkdownRenderer>
+        </div>
+      );
     
     case 'tool_call':
       // This case shouldn't normally be reached due to grouping, 
-      // but include for completeness
-      return (
-        <div className={`tool-call-block ${block.pending ? 'pending' : ''}`}>
-          <div className="tool-header">
-            <span className="tool-name">🔧 {block.toolName}</span>
-            {block.pending && <span className="tool-status">⏳ Executing...</span>}
-          </div>
-          <pre className="tool-args">{JSON.stringify(block.args, null, 2)}</pre>
-        </div>
-      );
+      // but include for completeness - make it collapsible too
+      return <CollapsibleToolCallBlock block={block} />;
     
     case 'tool_result':
       // This case shouldn't normally be reached due to grouping,
-      // but include for completeness
-      return (
-        <div className={`tool-result-block ${block.isError ? 'error' : ''}`}>
-          <div className="result-header">Result:</div>
-          <pre className="result-content">
-            {typeof block.result === 'string' 
-              ? block.result 
-              : JSON.stringify(block.result, null, 2)}
-          </pre>
-        </div>
-      );
+      // but include for completeness - make it collapsible too
+      return <CollapsibleToolResultBlock block={block} />;
     
     case 'image':
       return (

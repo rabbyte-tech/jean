@@ -29,7 +29,6 @@
 }
 
 .text-block {
-  white-space: pre-wrap;
   word-break: break-word;
 }
 
@@ -165,4 +164,28 @@
 .image-block img {
   max-width: 100%;
   border-radius: 8px;
+}
+
+/* Collapsible tool block styles */
+.tool-header.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tool-header.clickable:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.tool-chevron {
+  font-size: 10px;
+  margin-right: 6px;
+  color: #888;
+}
+
+.tool-args-preview {
+  font-size: 10px;
+  color: #888;
+  margin-left: 8px;
+  font-family: monospace;
 }
