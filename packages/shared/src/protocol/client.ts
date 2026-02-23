@@ -26,9 +26,16 @@ export interface SessionCloseMessage {
   sessionId: string;
 }
 
+export interface SessionUpdateMessage {
+  type: 'session.update';
+  sessionId: string;
+  preconfigId?: string;
+}
+
 export type ClientMessage = 
   | SessionCreateMessage 
   | SessionResumeMessage 
   | ChatMessage 
   | ToolApprovalMessage 
-  | SessionCloseMessage;
+  | SessionCloseMessage
+  | SessionUpdateMessage;

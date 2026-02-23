@@ -46,7 +46,7 @@ export function listSessions(status?: SessionStatus): Session[] {
   return rows.map(mapRowToSession);
 }
 
-export function updateSession(id: string, updates: Partial<Pick<Session, 'title' | 'status' | 'metadata'>>): Session | null {
+export function updateSession(id: string, updates: Partial<Pick<Session, 'title' | 'status' | 'metadata' | 'preconfigId'>>): Session | null {
   const db = getDatabase();
   const now = new Date().toISOString();
   
@@ -64,6 +64,10 @@ export function updateSession(id: string, updates: Partial<Pick<Session, 'title'
   if (updates.metadata !== undefined) {
     setClauses.push('metadata = ?');
     values.push(updates.metadata ? JSON.stringify(updates.metadata) : null);
+  }
+  if (updates.preconfigId !== undefined) {
+    setClauses.push('preconfig_id = ?');
+    values.push(updates.preconfigId);
   }
   
   values.push(id);

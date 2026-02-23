@@ -6,12 +6,22 @@ import type { ServerMessage, ClientMessage, Session, Message } from '@ai-agent/s
 import { createSession, getSession, updateSession } from './store/sessions';
 import { listMessages, createMessage } from './store/messages';
 import { streamChat } from './core/agent';
+import { createPendingApproval, resolveApproval } from './core/approvals';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Store connected clients with their session info
 const clients = new Map<WebSocket, { sessionId?: string }>();
+
+function getWsForSession(sessionId: string): WebSocket | undefined {
+  for (const [ws, data] of clients.entries()) {
+    if (data.sessionId === sessionId) {
+      return ws;
+    }
+  }
+  return undefined;
+}
 
 async function main() {
   console.log('Starting AI Agent Server...');
@@ -134,6 +144,21 @@ async function handleClientMessage(ws: WebSocket, msg: ClientMessage): Promise<v
       clients.set(ws, { sessionId: session.id });
       break;
     }
+
+    case 'session.update': {
+      const session = getSession(msg.sessionId);
+      if (!session) {
+        send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
+        return;
+      }
+      const updates: { preconfigId?: string } = {};
+      if (msg.preconfigId !== undefined) {
+        updates.preconfigId = msg.preconfigId;
+      }
+      const updated = updateSession(msg.sessionId, updates);
+      send(ws, { type: 'session.updated', session: updated! });
+      break;
+    }
     
     case 'session.close': {
       updateSession(msg.sessionId, { status: 'closed' });
@@ -147,8 +172,10 @@ async function handleClientMessage(ws: WebSocket, msg: ClientMessage): Promise<v
     }
     
     case 'tool.approval': {
-      // Handle tool approval - for now just log
-      console.log('Tool approval:', msg.toolCallId, msg.approved);
+      const resolved = resolveApproval(msg.toolCallId, msg.approved);
+      if (!resolved) {
+        console.warn('tool.approval received for unknown or expired toolCallId:', msg.toolCallId);
+      }
       break;
     }
     
@@ -197,13 +224,35 @@ async function handleChat(ws: WebSocket, sessionId: string, content: string) {
   
   // Send chat start
   send(ws, { type: 'chat.start', sessionId, messageId: assistantMsgId });
-  
+
+  // Create approval callback that communicates with client
+  const onToolApprovalRequired = async (toolCall: any, dangerous: boolean): Promise<boolean> => {
+    // Send approval request to client
+    const clientWs = getWsForSession(sessionId);
+    
+    if (clientWs) {
+      send(clientWs, {
+        type: 'tool.approval_required',
+        toolCallId: toolCall.toolCallId,
+        toolName: toolCall.toolName,
+        args: toolCall.args,
+        dangerous,
+      });
+    } else {
+      console.warn('Could not find client WebSocket for session:', sessionId);
+    }
+    
+    // Wait for client response
+    return createPendingApproval(toolCall, dangerous);
+  };
+
   try {
     // Stream the response
     for await (const event of streamChat({
       sessionId,
       preconfig,
       messages: history,
+      onToolApprovalRequired,
     })) {
       switch (event.type) {
         case 'delta':

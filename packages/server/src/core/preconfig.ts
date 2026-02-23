@@ -6,13 +6,22 @@ import { randomUUID } from 'crypto';
 
 const PRECONFIGS_DIR = process.env.PRECONFIGS_PATH || join(homedir(), '.jean2', 'preconfigs');
 
+// Common section to append to all system prompts about handling tool rejection errors
+const TOOL_REJECTION_HANDLING = `
+
+## Tool Rejection Handling
+When a tool call returns an error with "USER_REJECTION", this means the user explicitly denied permission to execute that action. Do NOT retry the same or similar tool calls. Instead:
+1. Acknowledge that you cannot perform that action
+2. Ask the user how they would like to proceed
+3. Suggest alternative approaches if appropriate`;
+
 // Default preconfigs
 const DEFAULT_PRECONFIGS: Preconfig[] = [
   {
     id: 'reader',
     name: 'Reader',
     description: 'Read-only agent for exploring codebases and documents',
-    systemPrompt: 'You are a helpful assistant focused on reading and understanding files. You have access to tools for reading files, searching content, and exploring directory structures. Be thorough and precise in your analysis.',
+    systemPrompt: 'You are a helpful assistant focused on reading and understanding files. You have access to tools for reading files, searching content, and exploring directory structures. Be thorough and precise in your analysis.' + TOOL_REJECTION_HANDLING,
     tools: ['read-file', 'glob', 'grep'],
     model: null,
     provider: null,
@@ -23,7 +32,7 @@ const DEFAULT_PRECONFIGS: Preconfig[] = [
     id: 'coder',
     name: 'Coder',
     description: 'Full-featured agent for writing and modifying code',
-    systemPrompt: 'You are a skilled software developer assistant. You can read, write, and modify files, and execute shell commands. Write clean, well-documented code. Test your changes when appropriate.',
+    systemPrompt: 'You are a skilled software developer assistant. You can read, write, and modify files, and execute shell commands. Write clean, well-documented code. Test your changes when appropriate.' + TOOL_REJECTION_HANDLING,
     tools: ['read-file', 'write-file', 'shell', 'glob', 'grep'],
     model: null,
     provider: null,
@@ -34,7 +43,7 @@ const DEFAULT_PRECONFIGS: Preconfig[] = [
     id: 'writer',
     name: 'Writer',
     description: 'Agent for writing documentation and content',
-    systemPrompt: 'You are a helpful writing assistant. You can read and write files to help create documentation, articles, and other text content. Write clearly and concisely.',
+    systemPrompt: 'You are a helpful writing assistant. You can read and write files to help create documentation, articles, and other text content. Write clearly and concisely.' + TOOL_REJECTION_HANDLING,
     tools: ['read-file', 'write-file'],
     model: null,
     provider: null,

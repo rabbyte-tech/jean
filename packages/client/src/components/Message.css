@@ -189,3 +189,63 @@
   margin-left: 8px;
   font-family: monospace;
 }
+
+/* Inline approval styles */
+.tool-group-block.needs-approval {
+  border: 2px solid #ffa500;
+  background: #3a3520;
+}
+
+.tool-status.approval-pending {
+  color: #ffa500;
+  font-weight: 600;
+}
+
+.tool-approval-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #555;
+}
+
+.tool-danger-warning {
+  background: #5a2a2a;
+  color: #ff6b6b;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.tool-approval-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.tool-approval-buttons button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.approval-deny {
+  background: #4a2a2a;
+  color: #ff6b6b;
+}
+
+.approval-deny:hover {
+  background: #5a3a3a;
+}
+
+.approval-approve {
+  background: #2a4a2a;
+  color: #6bff6b;
+}
+
+.approval-approve:hover {
+  background: #3a5a3a;
+}

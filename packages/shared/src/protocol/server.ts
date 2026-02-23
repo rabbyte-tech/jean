@@ -66,6 +66,11 @@ export interface SessionClosedMessage {
   sessionId: string;
 }
 
+export interface SessionUpdatedMessage {
+  type: 'session.updated';
+  session: Session;
+}
+
 export type ServerMessage =
   | SessionCreatedMessage
   | SessionResumedMessage
@@ -76,4 +81,5 @@ export type ServerMessage =
   | ToolApprovalRequiredMessage
   | ChatCompleteMessage
   | ErrorMessage
-  | SessionClosedMessage;
+  | SessionClosedMessage
+  | SessionUpdatedMessage;

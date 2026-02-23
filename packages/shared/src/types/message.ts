@@ -10,6 +10,8 @@ export interface ToolCallBlock {
   toolName: string;
   args: Record<string, unknown>;
   pending?: boolean;
+  needsApproval?: boolean;
+  dangerous?: boolean;
 }
 
 export interface ToolResultBlock {

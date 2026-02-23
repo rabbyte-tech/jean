@@ -1,15 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import type { Session, Message } from '@ai-agent/shared';
+import type { Session, Message, Preconfig } from '@ai-agent/shared';
 import MessageComponent from './Message';
 import './ChatView.css';
 
 interface Props {
   session: Session;
   messages: Message[];
+  preconfigs: Preconfig[];
   onSendMessage: (content: string) => void;
+  onChangePreconfig: (preconfigId: string) => void;
+  onApproveTool: (toolCallId: string, approved: boolean) => void;
 }
 
-export default function ChatView({ session, messages, onSendMessage }: Props) {
+export default function ChatView({ session, messages, preconfigs, onSendMessage, onChangePreconfig, onApproveTool }: Props) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -28,8 +31,25 @@ export default function ChatView({ session, messages, onSendMessage }: Props) {
   return (
     <div className="chat-view">
       <header className="chat-header">
-        <h2>{session.title || 'Untitled Session'}</h2>
-        <span className="session-id">{session.id.slice(0, 8)}</span>
+        <div className="chat-header-left">
+          <h2>{session.title || 'Untitled Session'}</h2>
+          <span className="session-id">{session.id.slice(0, 8)}</span>
+        </div>
+        <div className="chat-header-right">
+          <label className="preconfig-selector">
+            <span className="preconfig-label">Preconfig:</span>
+            <select 
+              value={session.preconfigId || ''} 
+              onChange={(e) => onChangePreconfig(e.target.value)}
+            >
+              {preconfigs.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
       
       <div className="messages">
@@ -39,7 +59,7 @@ export default function ChatView({ session, messages, onSendMessage }: Props) {
           </div>
         ) : (
           messages.map(msg => (
-            <MessageComponent key={msg.id} message={msg} />
+            <MessageComponent key={msg.id} message={msg} onApproveTool={onApproveTool} />
           ))
         )}
         <div ref={messagesEndRef} />

@@ -160,7 +160,8 @@ async function buildAiSdkTools(
     tools[name] = tool({
       description: definition.description,
       inputSchema: jsonSchema(definition.inputSchema) as any,
-      needsApproval,
+      // Don't use AI SDK's needsApproval - we handle approval ourselves in execute
+      // needsApproval,
       execute: async (args: Record<string, unknown>) => {
         // If approval is required, AI SDK v6 will handle the approval flow
         // We execute here and return the result
@@ -171,12 +172,28 @@ async function buildAiSdkTools(
           args,
         };
         
-        // If approval is required and we have an approval callback, check for approval
         if (needsApproval && onToolApprovalRequired) {
           const approved = await onToolApprovalRequired(toolCall, definition.dangerous);
           if (!approved) {
-            return { error: 'Tool call was not approved' };
+            return { 
+              error: 'USER_REJECTION',
+              message: `The user explicitly denied permission to execute this tool (${name}). ` +
+                       `Do NOT retry this tool call or similar variations. ` +
+                       `Acknowledge this rejection to the user and ask what they would like you to do instead, ` +
+                       `or suggest alternative approaches that don't require this specific action.`,
+              toolName: name,
+              args: args
+            };
           }
+        } else if (needsApproval && !onToolApprovalRequired) {
+          return { 
+            error: 'USER_REJECTION',
+            message: `No approval callback was configured, so the tool (${name}) could not be executed. ` +
+                     `This is a configuration error - do NOT retry this tool call. ` +
+                     `Inform the user that the tool execution was not possible due to missing approval configuration.`,
+            toolName: name,
+            args: args
+          };
         }
         
         // Execute the tool

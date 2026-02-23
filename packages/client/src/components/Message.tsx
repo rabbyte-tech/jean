@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Message as MessageType, ContentBlock, ToolCallBlock, ToolResultBlock } from '@ai-agent/shared';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import './Message.css';
 
 interface Props {
   message: MessageType;
+  onApproveTool?: (toolCallId: string, approved: boolean) => void;
 }
 
-export default function Message({ message }: Props) {
+export default function Message({ message, onApproveTool }: Props) {
   const roleClass = message.role === 'user' ? 'user' : 'assistant';
   
   // Group tool_call and tool_result blocks together by toolCallId
@@ -18,7 +19,7 @@ export default function Message({ message }: Props) {
       <div className="message-role">{message.role}</div>
       <div className="message-content">
         {groupedContent.map((item, i) => (
-          <ContentBlockComponent key={i} item={item} />
+          <ContentBlockComponent key={i} item={item} onApproveTool={onApproveTool} />
         ))}
       </div>
     </div>
@@ -71,15 +72,29 @@ function groupToolCallsAndResults(content: ContentBlock[]): ContentItem[] {
 }
 
 // Collapsible tool block component for grouped_tool items
-function ToolBlock({ toolCall, toolResult }: { toolCall: ToolCallBlock; toolResult: ToolResultBlock | null }) {
+function ToolBlock({ toolCall, toolResult, onApproveTool }: { 
+  toolCall: ToolCallBlock; 
+  toolResult: ToolResultBlock | null;
+  onApproveTool?: (toolCallId: string, approved: boolean) => void;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // DEBUG: Log needsApproval status
+  console.log('[DEBUG ToolBlock] toolName:', toolCall.toolName, 'needsApproval:', toolCall.needsApproval, 'toolCallId:', toolCall.toolCallId);
+  
+  // Auto-expand when needsApproval becomes true
+  useEffect(() => {
+    if (toolCall.needsApproval) {
+      setIsExpanded(true);
+    }
+  }, [toolCall.needsApproval]);
   
   // Format args preview (truncate to ~50 chars)
   const argsPreview = JSON.stringify(toolCall.args);
   const truncatedArgs = argsPreview.length > 50 ? argsPreview.slice(0, 47) + '...' : argsPreview;
   
   return (
-    <div className={`tool-group-block ${toolCall.pending ? 'pending' : ''}`}>
+    <div className={`tool-group-block ${toolCall.pending ? 'pending' : ''} ${toolCall.needsApproval ? 'needs-approval' : ''}`}>
       <div 
         className="tool-header clickable" 
         onClick={() => setIsExpanded(!isExpanded)}
@@ -87,6 +102,7 @@ function ToolBlock({ toolCall, toolResult }: { toolCall: ToolCallBlock; toolResu
         <span className="tool-chevron">{isExpanded ? '▼' : '▶'}</span>
         <span className="tool-name">🔧 {toolCall.toolName}</span>
         {!isExpanded && <span className="tool-args-preview">{truncatedArgs}</span>}
+        {toolCall.needsApproval && <span className="tool-status approval-pending">⚠️ Needs Approval</span>}
         {toolCall.pending && <span className="tool-status">⏳ Executing...</span>}
       </div>
       
@@ -107,6 +123,22 @@ function ToolBlock({ toolCall, toolResult }: { toolCall: ToolCallBlock; toolResu
             </div>
           )}
         </>
+      )}
+      
+      {toolCall.needsApproval && (
+        <div className="tool-approval-section">
+          {toolCall.dangerous && (
+            <div className="tool-danger-warning">⚠️ This tool is marked as dangerous</div>
+          )}
+          <div className="tool-approval-buttons">
+            <button className="approval-deny" onClick={() => onApproveTool?.(toolCall.toolCallId, false)}>
+              Deny
+            </button>
+            <button className="approval-approve" onClick={() => onApproveTool?.(toolCall.toolCallId, true)}>
+              Approve
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -163,12 +195,12 @@ function CollapsibleToolResultBlock({ block }: { block: ToolResultBlock }) {
   );
 }
 
-function ContentBlockComponent({ item }: { item: ContentItem }) {
+function ContentBlockComponent({ item, onApproveTool }: { item: ContentItem; onApproveTool?: (toolCallId: string, approved: boolean) => void }) {
   
   // Handle grouped tool call + result
   if (item.type === 'grouped_tool') {
     const { toolCall, toolResult } = item;
-    return <ToolBlock toolCall={toolCall} toolResult={toolResult} />;
+    return <ToolBlock toolCall={toolCall} toolResult={toolResult} onApproveTool={onApproveTool} />;
   }
   
   // Handle regular content blocks
