@@ -1,0 +1,32 @@
+{
+  "name": "glob",
+  "description": "Find files matching a glob pattern",
+  "script": "script.ts",
+  "runtime": "bun",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "pattern": {
+        "type": "string",
+        "description": "The glob pattern to match"
+      },
+      "path": {
+        "type": "string",
+        "description": "The directory to search in"
+      }
+    },
+    "required": ["pattern"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "files": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    }
+  },
+  "timeout": 30000,
+  "requireApproval": false,
+  "dangerous": false
+}

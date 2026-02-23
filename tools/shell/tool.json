@@ -1,0 +1,31 @@
+{
+  "name": "shell",
+  "description": "Execute a shell command",
+  "script": "script.ts",
+  "runtime": "bun",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "command": {
+        "type": "string",
+        "description": "The shell command to execute"
+      },
+      "cwd": {
+        "type": "string",
+        "description": "Working directory for the command"
+      }
+    },
+    "required": ["command"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "stdout": { "type": "string" },
+      "stderr": { "type": "string" },
+      "exitCode": { "type": "number" }
+    }
+  },
+  "timeout": 60000,
+  "requireApproval": true,
+  "dangerous": true
+}

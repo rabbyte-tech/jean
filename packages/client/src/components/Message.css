@@ -1,0 +1,168 @@
+.message {
+  margin-bottom: 16px;
+  max-width: 80%;
+}
+
+.message.user {
+  margin-left: auto;
+}
+
+.message.assistant {
+  margin-right: auto;
+}
+
+.message-role {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.message-content {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #2a2a2a;
+}
+
+.message.user .message-content {
+  background: #3a6ea5;
+}
+
+.text-block {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tool-call-block {
+  background: #333;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.tool-header {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.tool-name {
+  color: #4a9eff;
+}
+
+.tool-args {
+  font-size: 12px;
+  margin: 0;
+  overflow-x: auto;
+}
+
+.tool-call-block.pending {
+  border: 1px dashed #666;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.tool-status {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #ffa500;
+  animation: blink 1s ease-in-out infinite;
+}
+
+/* Grouped tool call + result block */
+.tool-group-block {
+  background: #333;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.tool-group-block.pending {
+  border: 1px dashed #666;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.tool-group-block .tool-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #444;
+  margin-bottom: 8px;
+}
+
+.tool-args-section {
+  margin-bottom: 8px;
+}
+
+.tool-args-label,
+.tool-result-label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.tool-group-block .tool-args {
+  background: #2a2a2a;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin: 0;
+  overflow-x: auto;
+}
+
+.tool-result-section {
+  background: #2d4a2d;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.tool-result-section.error {
+  background: #4a2a2a;
+}
+
+.tool-result-section .tool-result-content {
+  font-size: 12px;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.tool-result-block {
+  background: #2d4a2d;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.tool-result-block.error {
+  background: #4a2d2d;
+}
+
+.result-header {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.result-content {
+  font-size: 12px;
+  margin: 0;
+  overflow-x: auto;
+}
+
+.image-block img {
+  max-width: 100%;
+  border-radius: 8px;
+}

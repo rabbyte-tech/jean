@@ -1,0 +1,26 @@
+{
+  "name": "read-file",
+  "description": "Read the contents of a file from the filesystem",
+  "script": "script.ts",
+  "runtime": "bun",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The absolute path to the file to read"
+      }
+    },
+    "required": ["path"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "content": { "type": "string" },
+      "error": { "type": "string" }
+    }
+  },
+  "timeout": 30000,
+  "requireApproval": false,
+  "dangerous": false
+}

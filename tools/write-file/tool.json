@@ -1,0 +1,30 @@
+{
+  "name": "write-file",
+  "description": "Write content to a file on the filesystem",
+  "script": "script.ts",
+  "runtime": "bun",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The absolute path to the file to write"
+      },
+      "content": {
+        "type": "string",
+        "description": "The content to write to the file"
+      }
+    },
+    "required": ["path", "content"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "success": { "type": "boolean" },
+      "error": { "type": "string" }
+    }
+  },
+  "timeout": 30000,
+  "requireApproval": true,
+  "dangerous": false
+}

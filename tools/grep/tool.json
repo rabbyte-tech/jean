@@ -1,0 +1,43 @@
+{
+  "name": "grep",
+  "description": "Search for text patterns in files",
+  "script": "script.ts",
+  "runtime": "bun",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "pattern": {
+        "type": "string",
+        "description": "The regex pattern to search for"
+      },
+      "path": {
+        "type": "string",
+        "description": "The file or directory to search in"
+      },
+      "include": {
+        "type": "string",
+        "description": "File pattern to include"
+      }
+    },
+    "required": ["pattern", "path"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "matches": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "file": { "type": "string" },
+            "line": { "type": "number" },
+            "content": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "timeout": 30000,
+  "requireApproval": false,
+  "dangerous": false
+}
