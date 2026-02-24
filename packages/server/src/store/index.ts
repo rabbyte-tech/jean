@@ -36,9 +36,30 @@ function initializeSchema(db: Database): void {
       status TEXT NOT NULL DEFAULT 'active',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
-      metadata TEXT
+      metadata TEXT,
+      selected_model TEXT
     )
   `);
+  
+  // Add selected_model column if it doesn't exist (for existing databases)
+  try {
+    db.run('ALTER TABLE sessions ADD COLUMN selected_model TEXT');
+  } catch (e: any) {
+    // Ignore error if column already exists
+    if (!e.message?.includes('duplicate column name')) {
+      console.warn('Could not add selected_model column:', e.message);
+    }
+  }
+  
+  // Add selected_provider column if it doesn't exist (for existing databases)
+  try {
+    db.run('ALTER TABLE sessions ADD COLUMN selected_provider TEXT');
+  } catch (e: any) {
+    // Ignore error if column already exists
+    if (!e.message?.includes('duplicate column name')) {
+      console.warn('Could not add selected_provider column:', e.message);
+    }
+  }
   
   db.run('CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status)');
 

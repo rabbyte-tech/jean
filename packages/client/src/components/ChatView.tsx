@@ -1,20 +1,47 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Session, Message, Preconfig } from '@ai-agent/shared';
 import MessageComponent from './Message';
+import TokenUsage from './TokenUsage';
+import ModelSelector from './ModelSelector';
 import './ChatView.css';
 
 interface Props {
   session: Session;
   messages: Message[];
   preconfigs: Preconfig[];
+  models: Array<{
+    id: string;
+    name: string;
+    contextWindow: number;
+    tier: 'budget' | 'standard' | 'premium';
+    providerId: string;
+    providerName: string;
+  }>;
+  defaultModel: string;
   onSendMessage: (content: string) => void;
   onChangePreconfig: (preconfigId: string) => void;
+  onChangeModel: (modelId: string, providerId: string) => void;
   onApproveTool: (toolCallId: string, approved: boolean) => void;
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  modelName: string;
 }
 
-export default function ChatView({ session, messages, preconfigs, onSendMessage, onChangePreconfig, onApproveTool }: Props) {
+export default function ChatView({ session, messages, preconfigs, models, defaultModel, onSendMessage, onChangePreconfig, onChangeModel, onApproveTool, usage, modelName }: Props) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Determine which model to show as selected
+  const selectedModel = session.selectedModel || 
+    preconfigs.find(p => p.id === session.preconfigId)?.model || 
+    defaultModel;
+  
+  // Find the current model's context window from the models array
+  const currentModelInfo = models.find(m => m.id === modelName);
+  const contextWindow = currentModelInfo?.contextWindow;
   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -36,19 +63,37 @@ export default function ChatView({ session, messages, preconfigs, onSendMessage,
           <span className="session-id">{session.id.slice(0, 8)}</span>
         </div>
         <div className="chat-header-right">
-          <label className="preconfig-selector">
-            <span className="preconfig-label">Preconfig:</span>
-            <select 
-              value={session.preconfigId || ''} 
-              onChange={(e) => onChangePreconfig(e.target.value)}
-            >
-              {preconfigs.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="header-control">
+            <TokenUsage
+              promptTokens={usage.promptTokens}
+              completionTokens={usage.completionTokens}
+              totalTokens={usage.totalTokens}
+              modelName={modelName}
+              contextWindow={contextWindow}
+            />
+          </div>
+          <div className="header-control">
+            <ModelSelector
+              models={models}
+              selectedModelId={selectedModel}
+              onChangeModel={(modelId, providerId) => onChangeModel(modelId, providerId)}
+            />
+          </div>
+          <div className="header-control">
+            <label className="preconfig-selector">
+              <span className="preconfig-label">Preconfig:</span>
+              <select 
+                value={session.preconfigId || ''} 
+                onChange={(e) => onChangePreconfig(e.target.value)}
+              >
+                {preconfigs.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
       </header>
       

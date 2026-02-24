@@ -1,4 +1,4 @@
-export type SessionStatus = 'active' | 'paused' | 'closed';
+export type SessionStatus = 'active' | 'closed';
 
 export interface Session {
   id: string;
@@ -8,4 +8,6 @@ export interface Session {
   createdAt: string;
   updatedAt: string;
   metadata: Record<string, unknown> | null;
+  selectedModel?: string | null;
+  selectedProvider?: string | null;
 }

@@ -71,6 +71,23 @@ export interface SessionUpdatedMessage {
   session: Session;
 }
 
+export interface ChatUsageMessage {
+  type: 'chat.usage';
+  sessionId: string;
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  model: string;
+}
+
+export interface ChatUserMessageMessage {
+  type: 'chat.user_message';
+  sessionId: string;
+  message: Message;
+}
+
 export type ServerMessage =
   | SessionCreatedMessage
   | SessionResumedMessage
@@ -82,4 +99,6 @@ export type ServerMessage =
   | ChatCompleteMessage
   | ErrorMessage
   | SessionClosedMessage
-  | SessionUpdatedMessage;
+  | SessionUpdatedMessage
+  | ChatUsageMessage
+  | ChatUserMessageMessage;

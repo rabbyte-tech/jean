@@ -41,6 +41,9 @@ import {
 // Import tool operations
 import { listTools, getTool } from './tools';
 
+// Import config functions
+import { getModelsConfig, getAllModels } from './config';
+
 export function createApp() {
   const app = new Hono();
 
@@ -165,32 +168,6 @@ export function createApp() {
     }
     
     return c.json({ success: true });
-  });
-
-  // POST /api/sessions/:id/pause - Pause a session
-  app.post('/api/sessions/:id/pause', async (c) => {
-    const id = c.req.param('id');
-    
-    const session = updateSession(id, { status: 'paused' });
-    
-    if (!session) {
-      return c.json({ error: 'Not Found', message: 'Session not found' }, 404);
-    }
-    
-    return c.json({ session });
-  });
-
-  // POST /api/sessions/:id/resume - Resume a session
-  app.post('/api/sessions/:id/resume', async (c) => {
-    const id = c.req.param('id');
-    
-    const session = updateSession(id, { status: 'active' });
-    
-    if (!session) {
-      return c.json({ error: 'Not Found', message: 'Session not found' }, 404);
-    }
-    
-    return c.json({ session });
   });
 
   // ============================================================================
@@ -326,6 +303,25 @@ export function createApp() {
       return c.json({ tool: tool.definition });
     } catch (error) {
       return c.json({ error: 'Not Found', message: 'Tool not found' }, 404);
+    }
+  });
+
+  // ============================================================================
+  // Models API
+  // ============================================================================
+
+  // GET /api/models - List all available models
+  app.get('/api/models', async (c) => {
+    try {
+      const models = getAllModels();
+      const config = getModelsConfig();
+      return c.json({ 
+        models,
+        defaultModel: config.defaultModel,
+        defaultProvider: config.defaultProvider,
+      });
+    } catch (error) {
+      return c.json({ models: [], error: 'Failed to load models' });
     }
   });
 

@@ -32,10 +32,18 @@ export interface SessionUpdateMessage {
   preconfigId?: string;
 }
 
+export interface SessionUpdateModelMessage {
+  type: 'session.update_model';
+  sessionId: string;
+  modelId: string;
+  providerId: string;
+}
+
 export type ClientMessage = 
   | SessionCreateMessage 
   | SessionResumeMessage 
   | ChatMessage 
   | ToolApprovalMessage 
   | SessionCloseMessage
-  | SessionUpdateMessage;
+  | SessionUpdateMessage
+  | SessionUpdateModelMessage;

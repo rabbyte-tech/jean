@@ -1,0 +1,18 @@
+{
+  "providers": [
+    {
+      "id": "openrouter",
+      "name": "OpenRouter",
+      "models": [
+        {
+          "id": "stepfun/step-3.5-flash:free",
+          "name": "StepFun: Step-3.5 Flash (Free)",
+          "contextWindow": 256000,
+          "tier": "budget"
+        }
+      ]
+    }
+  ],
+  "defaultModel": "stepfun/step-3.5-flash:free",
+  "defaultProvider": "openrouter"
+}

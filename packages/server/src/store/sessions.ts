@@ -11,8 +11,8 @@ export function createSession(session: Omit<Session, 'createdAt' | 'updatedAt'> 
   };
   
   db.run(`
-    INSERT INTO sessions (id, preconfig_id, title, status, created_at, updated_at, metadata)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO sessions (id, preconfig_id, title, status, created_at, updated_at, metadata, selected_model, selected_provider)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     s.id,
     s.preconfigId,
@@ -20,7 +20,9 @@ export function createSession(session: Omit<Session, 'createdAt' | 'updatedAt'> 
     s.status,
     s.createdAt,
     s.updatedAt,
-    s.metadata ? JSON.stringify(s.metadata) : null
+    s.metadata ? JSON.stringify(s.metadata) : null,
+    s.selectedModel ?? null,
+    s.selectedProvider ?? null
   ]);
   
   return s;
@@ -46,7 +48,7 @@ export function listSessions(status?: SessionStatus): Session[] {
   return rows.map(mapRowToSession);
 }
 
-export function updateSession(id: string, updates: Partial<Pick<Session, 'title' | 'status' | 'metadata' | 'preconfigId'>>): Session | null {
+export function updateSession(id: string, updates: Partial<Pick<Session, 'title' | 'status' | 'metadata' | 'preconfigId' | 'selectedModel' | 'selectedProvider'>>): Session | null {
   const db = getDatabase();
   const now = new Date().toISOString();
   
@@ -68,6 +70,14 @@ export function updateSession(id: string, updates: Partial<Pick<Session, 'title'
   if (updates.preconfigId !== undefined) {
     setClauses.push('preconfig_id = ?');
     values.push(updates.preconfigId);
+  }
+  if (updates.selectedModel !== undefined) {
+    setClauses.push('selected_model = ?');
+    values.push(updates.selectedModel);
+  }
+  if (updates.selectedProvider !== undefined) {
+    setClauses.push('selected_provider = ?');
+    values.push(updates.selectedProvider);
   }
   
   values.push(id);
@@ -91,5 +101,7 @@ function mapRowToSession(row: any): Session {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     metadata: row.metadata ? JSON.parse(row.metadata) : null,
+    selectedModel: row.selected_model ?? null,
+    selectedProvider: row.selected_provider ?? null,
   };
 }

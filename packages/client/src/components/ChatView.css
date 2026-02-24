@@ -80,6 +80,18 @@
 .chat-header-right {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+/* Header control card styling */
+.header-control {
+  display: flex;
+  align-items: center;
+  background: #252525;
+  border: 1px solid #383838;
+  border-radius: 8px;
+  padding: 6px 12px;
+  gap: 8px;
 }
 
 .preconfig-selector {

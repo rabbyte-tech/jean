@@ -7,6 +7,7 @@ import { createSession, getSession, updateSession } from './store/sessions';
 import { listMessages, createMessage } from './store/messages';
 import { streamChat } from './core/agent';
 import { createPendingApproval, resolveApproval } from './core/approvals';
+import { getModelsConfig, findModel } from './config';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -23,15 +24,31 @@ function getWsForSession(sessionId: string): WebSocket | undefined {
   return undefined;
 }
 
+function broadcast(message: ServerMessage, excludeWs?: WebSocket) {
+  const messageStr = JSON.stringify(message);
+  for (const [ws] of clients.entries()) {
+    if (ws !== excludeWs && ws.readyState === WebSocket.OPEN) {
+      ws.send(messageStr);
+    }
+  }
+}
+
 async function main() {
   console.log('Starting AI Agent Server...');
   
-  // Check LLM configuration
-  const apiKey = process.env.LLM_API_KEY;
-  if (!apiKey) {
-    console.warn('WARNING: LLM_API_KEY not set. Chat will not work.');
+  // Check available API keys
+  const availableProviders: string[] = [];
+  if (process.env.LLM_OPENAI_API_KEY) availableProviders.push('openai');
+  if (process.env.LLM_ANTHROPIC_API_KEY) availableProviders.push('anthropic');
+  if (process.env.LLM_OPENROUTER_API_KEY) availableProviders.push('openrouter');
+  if (process.env.LLM_GOOGLE_API_KEY) availableProviders.push('google');
+
+  if (availableProviders.length > 0) {
+    console.log(`Available providers: ${availableProviders.join(', ')}`);
+    console.log(`Default model: stepfun/step-3.5-flash:free (set via models.json)`);
   } else {
-    console.log(`LLM configured: ${process.env.LLM_PROVIDER || 'openai'} / ${process.env.LLM_MODEL || 'gpt-4o'}`);
+    console.warn('WARNING: No LLM API keys configured. Chat will not work.');
+    console.warn('Set at least one of: LLM_OPENAI_API_KEY, LLM_ANTHROPIC_API_KEY, LLM_OPENROUTER_API_KEY, LLM_GOOGLE_API_KEY');
   }
   
   // Initialize preconfigs
@@ -134,14 +151,8 @@ async function handleClientMessage(ws: WebSocket, msg: ClientMessage): Promise<v
         send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
         return;
       }
-      if (session.status === 'paused') {
-        updateSession(msg.sessionId, { status: 'active' });
-        const updated = getSession(msg.sessionId);
-        send(ws, { type: 'session.resumed', session: updated! });
-      } else {
-        send(ws, { type: 'session.resumed', session });
-      }
       clients.set(ws, { sessionId: session.id });
+      send(ws, { type: 'session.resumed', session });
       break;
     }
 
@@ -156,6 +167,20 @@ async function handleClientMessage(ws: WebSocket, msg: ClientMessage): Promise<v
         updates.preconfigId = msg.preconfigId;
       }
       const updated = updateSession(msg.sessionId, updates);
+      send(ws, { type: 'session.updated', session: updated! });
+      break;
+    }
+
+    case 'session.update_model': {
+      const session = getSession(msg.sessionId);
+      if (!session) {
+        send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
+        return;
+      }
+      const updated = updateSession(msg.sessionId, { 
+        selectedModel: msg.modelId,
+        selectedProvider: msg.providerId 
+      });
       send(ws, { type: 'session.updated', session: updated! });
       break;
     }
@@ -185,25 +210,56 @@ async function handleClientMessage(ws: WebSocket, msg: ClientMessage): Promise<v
 }
 
 async function handleChat(ws: WebSocket, sessionId: string, content: string) {
-  // Check for API key
-  if (!process.env.LLM_API_KEY) {
-    send(ws, { type: 'error', code: 'no_api_key', message: 'LLM_API_KEY not configured' });
-    return;
-  }
-  
   const session = getSession(sessionId);
   if (!session) {
     send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
     return;
   }
   
-  // Get preconfig
+  // Get preconfig (for default model)
   const preconfig = session.preconfigId 
     ? await getPreconfig(session.preconfigId)
     : await getDefaultPreconfig();
-  
+
   if (!preconfig) {
     send(ws, { type: 'error', code: 'no_preconfig', message: 'No preconfig found' });
+    return;
+  }
+
+  // Get the default model from config
+  const config = getModelsConfig();
+  const configDefaultModel = config.defaultModel;
+
+  // Determine which model and provider will be used:
+  // session > preconfig > config default
+  const modelId = session.selectedModel || preconfig?.model || configDefaultModel;
+  const provider = session.selectedProvider || 
+                  (preconfig?.model ? findProviderFromModel(preconfig.model) : null) || 
+                  config.defaultProvider;
+
+  // Helper function to find provider from model (for preconfig fallback)
+  function findProviderFromModel(m: string): string {
+    const modelInfo = findModel(m);
+    if (modelInfo) return modelInfo.providerId;
+    // Fallback parsing
+    if (m.includes('/')) return 'openrouter';
+    if (m.startsWith('claude-')) return 'anthropic';
+    if (m.startsWith('gemini-')) return 'google';
+    return 'openai';
+  }
+  
+  // Map provider to API key env var
+  type Provider = 'openai' | 'anthropic' | 'openrouter' | 'google';
+  const apiKeyEnvMap: Record<Provider, string> = {
+    'openai': 'LLM_OPENAI_API_KEY',
+    'anthropic': 'LLM_ANTHROPIC_API_KEY',
+    'openrouter': 'LLM_OPENROUTER_API_KEY',
+    'google': 'LLM_GOOGLE_API_KEY',
+  };
+  const apiKeyEnv = apiKeyEnvMap[provider as Provider];
+  
+  if (!process.env[apiKeyEnv]) {
+    send(ws, { type: 'error', code: 'no_api_key', message: `No API key configured for provider: ${provider}. Set ${apiKeyEnv}` });
     return;
   }
   
@@ -216,6 +272,18 @@ async function handleChat(ws: WebSocket, sessionId: string, content: string) {
     content: [{ type: 'text', text: content }],
   });
   
+  // Broadcast user message to all clients
+  broadcast({
+    type: 'chat.user_message',
+    sessionId,
+    message: {
+      id: userMsgId,
+      role: 'user',
+      content: [{ type: 'text', text: content }],
+      createdAt: new Date().toISOString(),
+    }
+  });
+  
   // Get message history
   const history = listMessages(sessionId);
   
@@ -223,7 +291,7 @@ async function handleChat(ws: WebSocket, sessionId: string, content: string) {
   const assistantMsgId = crypto.randomUUID();
   
   // Send chat start
-  send(ws, { type: 'chat.start', sessionId, messageId: assistantMsgId });
+  broadcast({ type: 'chat.start', sessionId, messageId: assistantMsgId });
 
   // Create approval callback that communicates with client
   const onToolApprovalRequired = async (toolCall: any, dangerous: boolean): Promise<boolean> => {
@@ -253,24 +321,35 @@ async function handleChat(ws: WebSocket, sessionId: string, content: string) {
       preconfig,
       messages: history,
       onToolApprovalRequired,
+      modelId: modelId,
+      providerId: provider,
     })) {
       switch (event.type) {
         case 'delta':
-          send(ws, { type: 'chat.delta', sessionId, messageId: assistantMsgId, delta: event.content });
+          broadcast({ type: 'chat.delta', sessionId, messageId: assistantMsgId, delta: event.content });
           break;
           
         case 'tool_call':
-          send(ws, { type: 'chat.tool_call', sessionId, messageId: assistantMsgId, toolCall: event.toolCall });
+          broadcast({ type: 'chat.tool_call', sessionId, messageId: assistantMsgId, toolCall: event.toolCall });
           break;
           
         case 'tool_result':
-          send(ws, { 
+          broadcast({ 
             type: 'chat.tool_result', 
             sessionId, 
             messageId: assistantMsgId,
             toolCallId: event.toolCallId,
             toolName: event.toolName,
             result: event.result 
+          });
+          break;
+          
+        case 'usage':
+          broadcast({ 
+            type: 'chat.usage', 
+            sessionId, 
+            usage: event.usage,
+            model: event.model,
           });
           break;
           
@@ -288,7 +367,7 @@ async function handleChat(ws: WebSocket, sessionId: string, content: string) {
             role: 'assistant',
             content: event.message.content,
           });
-          send(ws, { type: 'chat.complete', sessionId, message: assistantMessage });
+          broadcast({ type: 'chat.complete', sessionId, message: assistantMessage });
           break;
       }
     }

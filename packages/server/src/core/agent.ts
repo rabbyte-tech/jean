@@ -4,39 +4,97 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import type { Message, ContentBlock, ToolCallBlock, TextBlock, Preconfig } from '@ai-agent/shared';
 import { getTool, executeTool } from '../tools';
 import type { DiscoveredTool } from '../tools/types';
+import { findModel } from '../config';
 import { randomUUID } from 'crypto';
 
-// Provider configuration from environment
-// Supported providers: openai, anthropic, openrouter
-// For OpenRouter: set LLM_PROVIDER=openrouter and use model names like "openai/gpt-4o"
-const LLM_PROVIDER = process.env.LLM_PROVIDER || 'openai';
-const LLM_MODEL = process.env.LLM_MODEL || 'gpt-4o';
-const LLM_API_KEY = process.env.LLM_API_KEY;
+// Structured API keys from environment
+const LLM_OPENAI_API_KEY = process.env.LLM_OPENAI_API_KEY;
+const LLM_ANTHROPIC_API_KEY = process.env.LLM_ANTHROPIC_API_KEY;
+const LLM_OPENROUTER_API_KEY = process.env.LLM_OPENROUTER_API_KEY;
+const LLM_GOOGLE_API_KEY = process.env.LLM_GOOGLE_API_KEY;
 const LLM_BASE_URL = process.env.LLM_BASE_URL;
 const LLM_MAX_TOKENS = parseInt(process.env.LLM_MAX_TOKENS || '4096', 10);
 const LLM_TEMPERATURE = parseFloat(process.env.LLM_TEMPERATURE || '0.7');
 
-async function getModel(): Promise<LanguageModel> {
-  switch (LLM_PROVIDER) {
-    case 'openrouter':
-      // Use official OpenRouter provider
+async function getModel(modelId?: string, providerId?: string): Promise<LanguageModel> {
+  // Default model
+  const defaultModelId = 'gpt-4o';
+  const resolvedModelId = modelId || defaultModelId;
+  
+  // If we have a provider from session, use it directly
+  let provider = providerId;
+  let model = resolvedModelId;
+  
+  // Only look up if provider not provided
+  if (!provider) {
+    const modelInfo = findModel(resolvedModelId);
+    
+    if (modelInfo) {
+      provider = modelInfo.providerId;
+      model = modelInfo.id;
+    } else {
+      // Fallback: try to parse from model ID string for unknown models
+      // (this handles cases where model isn't in our config)
+      if (resolvedModelId.includes('/')) {
+        provider = 'openrouter';
+      } else if (resolvedModelId.startsWith('claude-')) {
+        provider = 'anthropic';
+      } else if (resolvedModelId.startsWith('gemini-')) {
+        provider = 'google';
+      } else {
+        provider = 'openai';
+      }
+    }
+  }
+  
+  // Get API key for the provider
+  const getApiKey = () => {
+    switch (provider) {
+      case 'openai':
+        return LLM_OPENAI_API_KEY;
+      case 'anthropic':
+        return LLM_ANTHROPIC_API_KEY;
+      case 'openrouter':
+        return LLM_OPENROUTER_API_KEY;
+      case 'google':
+        return LLM_GOOGLE_API_KEY;
+      default:
+        return LLM_OPENAI_API_KEY;
+    }
+  };
+  
+  const apiKey = getApiKey();
+  
+  if (!apiKey) {
+    throw new Error(`No API key configured for provider: ${provider}. Set LLM_${provider.toUpperCase()}_API_KEY environment variable.`);
+  }
+  
+  switch (provider) {
+    case 'openrouter': {
       const { createOpenRouter } = await import('@openrouter/ai-sdk-provider');
-      const openrouter = createOpenRouter({ 
-        apiKey: LLM_API_KEY,
-      });
-      return openrouter.chat(LLM_MODEL) as unknown as LanguageModel;
-      
-    case 'anthropic':
-      const anthropic = createAnthropic({ apiKey: LLM_API_KEY });
-      return anthropic(LLM_MODEL) as unknown as LanguageModel;
-      
+      const openrouter = createOpenRouter({ apiKey });
+      return openrouter.chat(model) as unknown as LanguageModel;
+    }
+    
+    case 'anthropic': {
+      const anthropic = createAnthropic({ apiKey });
+      return anthropic(model) as unknown as LanguageModel;
+    }
+    
+    case 'google': {
+      const { createGoogleGenerativeAI } = await import('@ai-sdk/google');
+      const google = createGoogleGenerativeAI({ apiKey });
+      return google(model) as unknown as LanguageModel;
+    }
+    
     case 'openai':
-    default:
+    default: {
       const openai = createOpenAI({ 
-        apiKey: LLM_API_KEY,
+        apiKey,
         baseURL: LLM_BASE_URL || undefined,
       });
-      return openai.chat(LLM_MODEL) as unknown as LanguageModel;
+      return openai.chat(model) as unknown as LanguageModel;
+    }
   }
 }
 
@@ -44,6 +102,8 @@ export interface ChatOptions {
   sessionId: string;
   preconfig: Preconfig;
   messages: Message[];
+  modelId?: string;  // Override model from session/preconfig
+  providerId?: string;  // Directly from session
   onDelta?: (delta: string) => void;
   onToolCall?: (toolCall: ToolCallBlock) => void;
   onToolApprovalRequired?: (toolCall: ToolCallBlock, dangerous: boolean) => Promise<boolean>;
@@ -215,11 +275,15 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
   | { type: 'tool_call'; toolCall: ToolCallBlock }
   | { type: 'tool_result'; toolCallId: string; toolName: string; result: unknown }
   | { type: 'approval_required'; toolCall: ToolCallBlock; dangerous: boolean }
+  | { type: 'usage'; usage: { promptTokens: number; completionTokens: number; totalTokens: number }; model: string }
   | { type: 'complete'; message: Message }
 > {
-  const { sessionId, preconfig, messages, onToolApprovalRequired } = options;
+  const { sessionId, preconfig, messages, onToolApprovalRequired, modelId, providerId } = options;
   
-  const model = await getModel();
+  // Resolve model: session override > preconfig > env default
+  const resolvedModelId = modelId || (preconfig.model ?? undefined);
+  const model = await getModel(resolvedModelId, providerId);
+  
   const toolNames = preconfig.tools || [];
   const aiTools = await buildAiSdkTools(toolNames, onToolApprovalRequired);
   
@@ -323,6 +387,29 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
   // Finalize text block - push (append) any remaining text, don't prepend
   if (currentText) {
     contentBlocks.push({ type: 'text', text: currentText });
+  }
+
+  // Capture and yield token usage information
+  // Prefer totalUsage for multi-step generations (when tool calls cause multiple steps)
+  const totalUsagePromise = result.totalUsage;
+  const usagePromise = result.usage;
+  
+  // Await both promises to get the values
+  const [totalUsage, usage] = await Promise.all([totalUsagePromise, usagePromise]);
+  const usageData = totalUsage ?? usage;
+  
+  if (usageData) {
+    // Use resolvedModelId directly if provided, otherwise default to 'gpt-4o'
+    const actualModelId = resolvedModelId || 'gpt-4o';
+    yield {
+      type: 'usage',
+      usage: {
+        promptTokens: usageData.inputTokens ?? 0,
+        completionTokens: usageData.outputTokens ?? 0,
+        totalTokens: usageData.totalTokens ?? 0,
+      },
+      model: actualModelId,
+    };
   }
 
   const finalMessage: Message = {

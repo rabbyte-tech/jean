@@ -1,0 +1,47 @@
+/**
+ * Model tier for pricing categorization
+ */
+export type ModelTier = 'budget' | 'standard' | 'premium';
+
+/**
+ * Definition of an LLM model
+ */
+export interface ModelDefinition {
+  /** Unique model identifier (e.g., "gpt-4o", "anthropic/claude-3.5-sonnet") */
+  id: string;
+  /** Human-readable model name */
+  name: string;
+  /** Maximum context window in tokens */
+  contextWindow: number;
+  /** Pricing tier */
+  tier: ModelTier;
+}
+
+/**
+ * Definition of an LLM provider
+ */
+export interface ProviderDefinition {
+  /** Provider identifier (e.g., "openai", "anthropic") */
+  id: string;
+  /** Human-readable provider name */
+  name: string;
+  /** Models available from this provider */
+  models: ModelDefinition[];
+}
+
+/**
+ * Model with provider info attached
+ */
+export interface ModelWithProvider extends ModelDefinition {
+  providerId: string;
+  providerName: string;
+}
+
+/**
+ * Full models configuration
+ */
+export interface ModelsConfig {
+  providers: ProviderDefinition[];
+  defaultModel: string;
+  defaultProvider: string;
+}

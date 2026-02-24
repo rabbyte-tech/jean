@@ -22,6 +22,6 @@
     },
     "composite": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/**/*.json"],
   "exclude": ["node_modules", "dist", "data"]
 }
