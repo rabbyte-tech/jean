@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock } from '@ai-agent/shared';
+import type { Session, Message, ServerMessage, ClientMessage, Preconfig } from '@ai-agent/shared';
 import SessionList from '@/components/SessionList';
 import ChatView from '@/components/ChatView';
 import './App.css';
@@ -211,7 +211,7 @@ function App() {
                   // Remove pending flag from tool_call and add tool_result
                   const updatedContent = m.content.map(block => {
                     if (block.type === 'tool_call' && block.toolCallId === msg.toolCallId) {
-                      const { pending, ...rest } = block as ToolCallBlock;
+                      const { pending: _pending, ...rest } = block as any;
                       return rest; // Remove pending flag
                     }
                     return block;
@@ -433,7 +433,7 @@ function App() {
               ...m,
               content: m.content.map(block => {
                 if (block.type === 'tool_call' && block.toolCallId === toolCallId) {
-                  const { needsApproval, dangerous, ...rest } = block as any;
+                  const { needsApproval: _needsApproval, dangerous: _dangerous, ...rest } = block as any;
                   return {
                     ...rest,
                     pending: approved, // Show pending if approved, otherwise stays without pending (denied)

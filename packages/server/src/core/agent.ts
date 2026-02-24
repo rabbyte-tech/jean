@@ -1,7 +1,7 @@
-import { generateText, streamText, tool, stepCountIs, jsonSchema, type LanguageModel } from 'ai';
+import { streamText, tool, stepCountIs, jsonSchema, type LanguageModel } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import type { Message, ContentBlock, ToolCallBlock, TextBlock, Preconfig } from '@ai-agent/shared';
+import type { Message, ContentBlock, ToolCallBlock, Preconfig } from '@ai-agent/shared';
 import { getTool, executeTool } from '@/tools';
 import { findModel } from '@/config';
 import { randomUUID } from 'crypto';
@@ -277,7 +277,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
   | { type: 'usage'; usage: { promptTokens: number; completionTokens: number; totalTokens: number }; model: string }
   | { type: 'complete'; message: Message }
 > {
-  const { sessionId, preconfig, messages, onToolApprovalRequired, modelId, providerId } = options;
+  const { _sessionId, preconfig, messages, onToolApprovalRequired, modelId, providerId } = options;
 
   // Resolve model: session override > preconfig > env default
   const resolvedModelId = modelId || (preconfig.model ?? undefined);
@@ -319,7 +319,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
         break;
       }
 
-      case 'tool-call':
+      case 'tool-call': {
         // Flush any pending text before adding the tool call
         if (currentText) {
           contentBlocks.push({ type: 'text', text: currentText });
@@ -344,8 +344,9 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
         // via the needsApproval option. The SDK will call execute after emitting tool-call.
         // We don't need to manually execute here anymore.
         break;
+      }
 
-      case 'tool-result':
+      case 'tool-result': {
         // AI SDK v6 emits tool-result events after tool execution completes
         // Extract the result from the output
         let result: unknown;
@@ -380,6 +381,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
           isError: isErrorResult,
         });
         break;
+      }
     }
   }
 

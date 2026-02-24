@@ -1,5 +1,5 @@
 const input = JSON.parse(await Bun.stdin.text());
-const { pattern, path, include } = input;
+const { pattern, path, _include } = input;
 
 // Simple grep implementation using ripgrep if available, otherwise fallback
 const result = Bun.spawnSync(['rg', '-n', '--json', pattern, path], {
@@ -22,7 +22,9 @@ if (result.exitCode === 0) {
           });
         }
       }
-    } catch {}
+    } catch {
+      // Skip non-JSON lines from ripgrep output
+    }
   }
 }
 

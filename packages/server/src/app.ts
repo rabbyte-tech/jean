@@ -13,7 +13,6 @@ import { prettyJSON } from 'hono/pretty-json';
 // Import types from shared
 import type {
   SessionStatus,
-  ToolDefinition,
 } from '@ai-agent/shared';
 
 // Import store operations
@@ -25,7 +24,6 @@ import {
   deleteSession,
 } from './store/sessions';
 import {
-  createMessage,
   listMessages,
 } from './store/messages';
 
@@ -284,7 +282,7 @@ export function createApp() {
     try {
       const tools = await listTools();
       return c.json({ tools });
-    } catch (error) {
+    } catch (_error) {
       return c.json({ tools: [] });
     }
   });
@@ -301,7 +299,7 @@ export function createApp() {
       }
       
       return c.json({ tool: tool.definition });
-    } catch (error) {
+    } catch (_error) {
       return c.json({ error: 'Not Found', message: 'Tool not found' }, 404);
     }
   });
@@ -320,7 +318,7 @@ export function createApp() {
         defaultModel: config.defaultModel,
         defaultProvider: config.defaultProvider,
       });
-    } catch (error) {
+    } catch (_error) {
       return c.json({ models: [], error: 'Failed to load models' });
     }
   });

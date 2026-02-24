@@ -55,7 +55,7 @@ const DEFAULT_PRECONFIGS: Preconfig[] = [
 async function ensureDir(): Promise<void> {
   try {
     await mkdir(PRECONFIGS_DIR, { recursive: true });
-  } catch (e) {
+  } catch (_e) {
     // Directory exists
   }
 }
@@ -105,7 +105,7 @@ export async function getPreconfig(id: string): Promise<Preconfig | null> {
   try {
     const content = await readFile(join(PRECONFIGS_DIR, `${id}.json`), 'utf-8');
     return JSON.parse(content) as Preconfig;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -148,7 +148,7 @@ export async function deletePreconfig(id: string): Promise<boolean> {
   try {
     await unlink(join(PRECONFIGS_DIR, `${id}.json`));
     return true;
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 }

@@ -37,7 +37,7 @@ export function getSession(id: string): Session | null {
 
 export function listSessions(status?: SessionStatus): Session[] {
   const db = getDatabase();
-  let query = 'SELECT * FROM sessions ORDER BY updated_at DESC';
+  const query = 'SELECT * FROM sessions ORDER BY updated_at DESC';
   
   if (status) {
     const rows = db.query('SELECT * FROM sessions WHERE status = ? ORDER BY updated_at DESC').all(status) as any[];

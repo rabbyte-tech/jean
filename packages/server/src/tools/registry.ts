@@ -5,7 +5,7 @@ import type { DiscoveredTool } from './types';
 
 const DEFAULT_TOOLS_PATH = process.env.TOOLS_PATH || join(process.cwd(), 'data', 'tools');
 
-let toolsCache: Map<string, DiscoveredTool> = new Map();
+const toolsCache: Map<string, DiscoveredTool> = new Map();
 let lastScanTime = 0;
 const CACHE_TTL = 60000; // 1 minute cache
 
@@ -39,7 +39,7 @@ export async function scanTools(toolsPath: string = DEFAULT_TOOLS_PATH): Promise
         console.warn(`Failed to read tool.json in ${entry.name}:`, e);
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Tools directory doesn't exist yet
     console.warn(`Tools directory not found: ${toolsPath}`);
   }

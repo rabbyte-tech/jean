@@ -2,7 +2,7 @@ import { createApp } from './app';
 import { initializePreconfigs, getPreconfig, getDefaultPreconfig } from './core/preconfig';
 import { scanTools } from './tools';
 import { closeDatabase } from './store';
-import type { ServerMessage, ClientMessage, Session, Message } from '@ai-agent/shared';
+import type { ServerMessage, ClientMessage, Message } from '@ai-agent/shared';
 import { createSession, getSession, updateSession } from './store/sessions';
 import { listMessages, createMessage } from './store/messages';
 import { streamChat } from './core/agent';
@@ -353,7 +353,7 @@ async function handleChat(ws: ServerWebSocket, sessionId: string, content: strin
           });
           break;
           
-        case 'usage':
+        case 'usage': {
           broadcast({ 
             type: 'chat.usage', 
             sessionId, 
@@ -370,8 +370,9 @@ async function handleChat(ws: ServerWebSocket, sessionId: string, content: strin
             });
           }
           break;
-          
-        case 'complete':
+        }
+        
+        case 'complete': {
           // Store assistant message
           const assistantMessage: Message = {
             id: assistantMsgId,
@@ -387,6 +388,7 @@ async function handleChat(ws: ServerWebSocket, sessionId: string, content: strin
           });
           broadcast({ type: 'chat.complete', sessionId, message: assistantMessage });
           break;
+        }
       }
     }
   } catch (err: any) {

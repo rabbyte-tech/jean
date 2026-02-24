@@ -80,7 +80,7 @@ export async function executeTool(
           success: true,
           result,
         });
-      } catch (e) {
+      } catch (_e) {
         resolve({
           success: false,
           error: `Failed to parse tool output: ${stdout.slice(0, 200)}`,
