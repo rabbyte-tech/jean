@@ -45,56 +45,6 @@ function initializeSchema(db: Database): void {
     )
   `);
   
-  // Add selected_model column if it doesn't exist (for existing databases)
-  try {
-    db.run('ALTER TABLE sessions ADD COLUMN selected_model TEXT');
-  } catch (e: any) {
-    // Ignore error if column already exists
-    if (!e.message?.includes('duplicate column name')) {
-      console.warn('Could not add selected_model column:', e.message);
-    }
-  }
-  
-  // Add selected_provider column if it doesn't exist (for existing databases)
-  try {
-    db.run('ALTER TABLE sessions ADD COLUMN selected_provider TEXT');
-  } catch (e: any) {
-    // Ignore error if column already exists
-    if (!e.message?.includes('duplicate column name')) {
-      console.warn('Could not add selected_provider column:', e.message);
-    }
-  }
-  
-  // Add prompt_tokens column if it doesn't exist (for existing databases)
-  try {
-    db.run('ALTER TABLE sessions ADD COLUMN prompt_tokens INTEGER DEFAULT 0');
-  } catch (e: any) {
-    // Ignore error if column already exists
-    if (!e.message?.includes('duplicate column name')) {
-      console.warn('Could not add prompt_tokens column:', e.message);
-    }
-  }
-  
-  // Add completion_tokens column if it doesn't exist (for existing databases)
-  try {
-    db.run('ALTER TABLE sessions ADD COLUMN completion_tokens INTEGER DEFAULT 0');
-  } catch (e: any) {
-    // Ignore error if column already exists
-    if (!e.message?.includes('duplicate column name')) {
-      console.warn('Could not add completion_tokens column:', e.message);
-    }
-  }
-  
-  // Add total_tokens column if it doesn't exist (for existing databases)
-  try {
-    db.run('ALTER TABLE sessions ADD COLUMN total_tokens INTEGER DEFAULT 0');
-  } catch (e: any) {
-    // Ignore error if column already exists
-    if (!e.message?.includes('duplicate column name')) {
-      console.warn('Could not add total_tokens column:', e.message);
-    }
-  }
-  
   db.run('CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status)');
 
   db.run(`
