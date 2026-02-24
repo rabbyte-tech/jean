@@ -40,7 +40,8 @@ export default function ChatView({ session, messages, preconfigs, models, defaul
     defaultModel;
   
   // Find the current model's context window from the models array
-  const currentModelInfo = models.find(m => m.id === modelName);
+  // Use selectedModel (derived from session/preconfig/defaultModel) for consistency
+  const currentModelInfo = models.find(m => m.id === selectedModel);
   const contextWindow = currentModelInfo?.contextWindow;
   
   useEffect(() => {

@@ -90,7 +90,7 @@ function App() {
           [msg.session.id]: []
         }));
         setSessionUsage({ promptTokens: 0, completionTokens: 0, totalTokens: 0 });
-        setCurrentModel('gpt-4o');
+        setCurrentModel(defaultModel);
         break;
       
       case 'session.resumed':
@@ -123,8 +123,8 @@ function App() {
                 [msg.session.id]: merged
               };
             });
-            setSessionUsage({ promptTokens: 0, completionTokens: 0, totalTokens: 0 });
-            setCurrentModel('gpt-4o');
+            setSessionUsage(msg.usage ?? { promptTokens: 0, completionTokens: 0, totalTokens: 0 });
+            setCurrentModel(msg.session.selectedModel || defaultModel);
           })
           .catch(console.error);
         break;

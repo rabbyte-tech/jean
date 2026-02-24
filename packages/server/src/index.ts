@@ -152,7 +152,15 @@ async function handleClientMessage(ws: WebSocket, msg: ClientMessage): Promise<v
         return;
       }
       clients.set(ws, { sessionId: session.id });
-      send(ws, { type: 'session.resumed', session });
+      send(ws, { 
+        type: 'session.resumed', 
+        session,
+        usage: session.totalTokens ? {
+          promptTokens: session.promptTokens ?? 0,
+          completionTokens: session.completionTokens ?? 0,
+          totalTokens: session.totalTokens ?? 0,
+        } : undefined,
+      });
       break;
     }
 
@@ -351,6 +359,15 @@ async function handleChat(ws: WebSocket, sessionId: string, content: string) {
             usage: event.usage,
             model: event.model,
           });
+          // Persist usage to database
+          const currentSession = getSession(sessionId);
+          if (currentSession) {
+            updateSession(sessionId, {
+              promptTokens: (currentSession.promptTokens ?? 0) + event.usage.promptTokens,
+              completionTokens: (currentSession.completionTokens ?? 0) + event.usage.completionTokens,
+              totalTokens: (currentSession.totalTokens ?? 0) + event.usage.totalTokens,
+            });
+          }
           break;
           
         case 'complete':

@@ -11,8 +11,8 @@ export function createSession(session: Omit<Session, 'createdAt' | 'updatedAt'> 
   };
   
   db.run(`
-    INSERT INTO sessions (id, preconfig_id, title, status, created_at, updated_at, metadata, selected_model, selected_provider)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO sessions (id, preconfig_id, title, status, created_at, updated_at, metadata, selected_model, selected_provider, prompt_tokens, completion_tokens, total_tokens)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0)
   `, [
     s.id,
     s.preconfigId,
@@ -48,7 +48,7 @@ export function listSessions(status?: SessionStatus): Session[] {
   return rows.map(mapRowToSession);
 }
 
-export function updateSession(id: string, updates: Partial<Pick<Session, 'title' | 'status' | 'metadata' | 'preconfigId' | 'selectedModel' | 'selectedProvider'>>): Session | null {
+export function updateSession(id: string, updates: Partial<Pick<Session, 'title' | 'status' | 'metadata' | 'preconfigId' | 'selectedModel' | 'selectedProvider' | 'promptTokens' | 'completionTokens' | 'totalTokens'>>): Session | null {
   const db = getDatabase();
   const now = new Date().toISOString();
   
@@ -79,6 +79,18 @@ export function updateSession(id: string, updates: Partial<Pick<Session, 'title'
     setClauses.push('selected_provider = ?');
     values.push(updates.selectedProvider);
   }
+  if (updates.promptTokens !== undefined) {
+    setClauses.push('prompt_tokens = ?');
+    values.push(updates.promptTokens);
+  }
+  if (updates.completionTokens !== undefined) {
+    setClauses.push('completion_tokens = ?');
+    values.push(updates.completionTokens);
+  }
+  if (updates.totalTokens !== undefined) {
+    setClauses.push('total_tokens = ?');
+    values.push(updates.totalTokens);
+  }
   
   values.push(id);
   
@@ -103,5 +115,8 @@ function mapRowToSession(row: any): Session {
     metadata: row.metadata ? JSON.parse(row.metadata) : null,
     selectedModel: row.selected_model ?? null,
     selectedProvider: row.selected_provider ?? null,
+    promptTokens: row.prompt_tokens ?? undefined,
+    completionTokens: row.completion_tokens ?? undefined,
+    totalTokens: row.total_tokens ?? undefined,
   };
 }

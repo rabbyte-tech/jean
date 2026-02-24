@@ -37,7 +37,11 @@ function initializeSchema(db: Database): void {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       metadata TEXT,
-      selected_model TEXT
+      selected_model TEXT,
+      selected_provider TEXT,
+      prompt_tokens INTEGER DEFAULT 0,
+      completion_tokens INTEGER DEFAULT 0,
+      total_tokens INTEGER DEFAULT 0
     )
   `);
   
@@ -58,6 +62,36 @@ function initializeSchema(db: Database): void {
     // Ignore error if column already exists
     if (!e.message?.includes('duplicate column name')) {
       console.warn('Could not add selected_provider column:', e.message);
+    }
+  }
+  
+  // Add prompt_tokens column if it doesn't exist (for existing databases)
+  try {
+    db.run('ALTER TABLE sessions ADD COLUMN prompt_tokens INTEGER DEFAULT 0');
+  } catch (e: any) {
+    // Ignore error if column already exists
+    if (!e.message?.includes('duplicate column name')) {
+      console.warn('Could not add prompt_tokens column:', e.message);
+    }
+  }
+  
+  // Add completion_tokens column if it doesn't exist (for existing databases)
+  try {
+    db.run('ALTER TABLE sessions ADD COLUMN completion_tokens INTEGER DEFAULT 0');
+  } catch (e: any) {
+    // Ignore error if column already exists
+    if (!e.message?.includes('duplicate column name')) {
+      console.warn('Could not add completion_tokens column:', e.message);
+    }
+  }
+  
+  // Add total_tokens column if it doesn't exist (for existing databases)
+  try {
+    db.run('ALTER TABLE sessions ADD COLUMN total_tokens INTEGER DEFAULT 0');
+  } catch (e: any) {
+    // Ignore error if column already exists
+    if (!e.message?.includes('duplicate column name')) {
+      console.warn('Could not add total_tokens column:', e.message);
     }
   }
   

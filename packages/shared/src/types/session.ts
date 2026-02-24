@@ -10,4 +10,7 @@ export interface Session {
   metadata: Record<string, unknown> | null;
   selectedModel?: string | null;
   selectedProvider?: string | null;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
 }

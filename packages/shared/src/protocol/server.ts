@@ -9,6 +9,11 @@ export interface SessionCreatedMessage {
 export interface SessionResumedMessage {
   type: 'session.resumed';
   session: Session;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 }
 
 export interface ChatStartMessage {
