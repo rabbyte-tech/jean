@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Message as MessageType, ContentBlock, ToolCallBlock, ToolResultBlock } from '@ai-agent/shared';
-import { MarkdownRenderer } from './MarkdownRenderer';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import './Message.css';
 
 interface Props {

@@ -2,9 +2,8 @@ import { generateText, streamText, tool, stepCountIs, jsonSchema, type LanguageM
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import type { Message, ContentBlock, ToolCallBlock, TextBlock, Preconfig } from '@ai-agent/shared';
-import { getTool, executeTool } from '../tools';
-import type { DiscoveredTool } from '../tools/types';
-import { findModel } from '../config';
+import { getTool, executeTool } from '@/tools';
+import { findModel } from '@/config';
 import { randomUUID } from 'crypto';
 
 // Structured API keys from environment
@@ -20,15 +19,15 @@ async function getModel(modelId?: string, providerId?: string): Promise<Language
   // Default model
   const defaultModelId = 'gpt-4o';
   const resolvedModelId = modelId || defaultModelId;
-  
+
   // If we have a provider from session, use it directly
   let provider = providerId;
   let model = resolvedModelId;
-  
+
   // Only look up if provider not provided
   if (!provider) {
     const modelInfo = findModel(resolvedModelId);
-    
+
     if (modelInfo) {
       provider = modelInfo.providerId;
       model = modelInfo.id;
@@ -46,7 +45,7 @@ async function getModel(modelId?: string, providerId?: string): Promise<Language
       }
     }
   }
-  
+
   // Get API key for the provider
   const getApiKey = () => {
     switch (provider) {
@@ -62,34 +61,34 @@ async function getModel(modelId?: string, providerId?: string): Promise<Language
         return LLM_OPENAI_API_KEY;
     }
   };
-  
+
   const apiKey = getApiKey();
-  
+
   if (!apiKey) {
     throw new Error(`No API key configured for provider: ${provider}. Set LLM_${provider.toUpperCase()}_API_KEY environment variable.`);
   }
-  
+
   switch (provider) {
     case 'openrouter': {
       const { createOpenRouter } = await import('@openrouter/ai-sdk-provider');
       const openrouter = createOpenRouter({ apiKey });
       return openrouter.chat(model) as unknown as LanguageModel;
     }
-    
+
     case 'anthropic': {
       const anthropic = createAnthropic({ apiKey });
       return anthropic(model) as unknown as LanguageModel;
     }
-    
+
     case 'google': {
       const { createGoogleGenerativeAI } = await import('@ai-sdk/google');
       const google = createGoogleGenerativeAI({ apiKey });
       return google(model) as unknown as LanguageModel;
     }
-    
+
     case 'openai':
     default: {
-      const openai = createOpenAI({ 
+      const openai = createOpenAI({
         apiKey,
         baseURL: LLM_BASE_URL || undefined,
       });
@@ -116,7 +115,7 @@ export interface ChatResult {
 
 async function convertToAiSdkMessages(messages: Message[]) {
   const result: { role: 'user' | 'assistant' | 'system' | 'tool'; content: any }[] = [];
-  
+
   // First, build a map of toolCallId -> toolName from all messages
   const toolCallIdToName: Record<string, string> = {};
   for (const msg of messages) {
@@ -126,7 +125,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
       }
     }
   }
-  
+
   // Then process messages as before
   for (const msg of messages) {
     // Separate text and tool_result blocks
@@ -137,7 +136,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
       toolName: string;
       output: unknown;
     }> = [];
-    
+
     for (const block of msg.content) {
       if (block.type === 'text') {
         textBlocks.push(block.text);
@@ -149,7 +148,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
         const output = block.isError
           ? { type: 'text' as const, value: JSON.stringify(block.result) }
           : { type: 'json' as const, value: block.result };
-        
+
         toolResultBlocks.push({
           type: 'tool-result' as const,
           toolCallId: block.toolCallId,
@@ -159,7 +158,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
       }
       // Ignore other block types (image) for AI SDK message conversion
     }
-    
+
     // If there are no tool result blocks, keep the original role
     if (toolResultBlocks.length === 0) {
       const content = textBlocks.join('\n\n');
@@ -169,7 +168,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
       });
       continue;
     }
-    
+
     // If there are only tool result blocks (no text), use role: "tool"
     if (textBlocks.length === 0) {
       // AI SDK expects each tool result as a separate message
@@ -181,7 +180,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
       }
       continue;
     }
-    
+
     // Mixed content: text + tool_result
     // First add the text as the original role message
     if (textBlocks.length > 0) {
@@ -191,7 +190,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
         content: textContent,
       });
     }
-    
+
     // Then add each tool result as separate tool messages
     for (const toolResult of toolResultBlocks) {
       result.push({
@@ -200,7 +199,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
       });
     }
   }
-  
+
   return result;
 }
 
@@ -209,14 +208,14 @@ async function buildAiSdkTools(
   onToolApprovalRequired?: (toolCall: ToolCallBlock, dangerous: boolean) => Promise<boolean>
 ): Promise<Record<string, any>> {
   const tools: Record<string, any> = {};
-  
+
   for (const name of toolNames) {
     const discoveredTool = await getTool(name);
     if (!discoveredTool) continue;
-    
+
     const { definition } = discoveredTool;
     const needsApproval = definition.requireApproval;
-    
+
     tools[name] = tool({
       description: definition.description,
       inputSchema: jsonSchema(definition.inputSchema) as any,
@@ -231,11 +230,11 @@ async function buildAiSdkTools(
           toolName: name,
           args,
         };
-        
+
         if (needsApproval && onToolApprovalRequired) {
           const approved = await onToolApprovalRequired(toolCall, definition.dangerous);
           if (!approved) {
-            return { 
+            return {
               error: 'USER_REJECTION',
               message: `The user explicitly denied permission to execute this tool (${name}). ` +
                        `Do NOT retry this tool call or similar variations. ` +
@@ -246,7 +245,7 @@ async function buildAiSdkTools(
             };
           }
         } else if (needsApproval && !onToolApprovalRequired) {
-          return { 
+          return {
             error: 'USER_REJECTION',
             message: `No approval callback was configured, so the tool (${name}) could not be executed. ` +
                      `This is a configuration error - do NOT retry this tool call. ` +
@@ -255,18 +254,18 @@ async function buildAiSdkTools(
             args: args
           };
         }
-        
+
         // Execute the tool
         const execResult = await executeTool(discoveredTool, args);
         if (!execResult.success) {
           return { error: execResult.error };
         }
-        
+
         return execResult.result;
       },
     });
   }
-  
+
   return tools;
 }
 
@@ -279,20 +278,20 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
   | { type: 'complete'; message: Message }
 > {
   const { sessionId, preconfig, messages, onToolApprovalRequired, modelId, providerId } = options;
-  
+
   // Resolve model: session override > preconfig > env default
   const resolvedModelId = modelId || (preconfig.model ?? undefined);
   const model = await getModel(resolvedModelId, providerId);
-  
+
   const toolNames = preconfig.tools || [];
   const aiTools = await buildAiSdkTools(toolNames, onToolApprovalRequired);
-  
+
   // Build system message
   const systemMessage = preconfig.systemPrompt;
-  
+
   // Convert messages for ai-sdk
   const aiMessages = await convertToAiSdkMessages(messages);
-  
+
   const result = streamText({
     model,
     system: systemMessage,
@@ -309,7 +308,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
   const messageId = randomUUID();
 
   for await (const delta of result.fullStream) {
-    
+
     switch (delta.type) {
       case 'text-delta': {
         const textContent = delta.text || '';
@@ -319,14 +318,14 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
         }
         break;
       }
-        
+
       case 'tool-call':
         // Flush any pending text before adding the tool call
         if (currentText) {
           contentBlocks.push({ type: 'text', text: currentText });
           currentText = '';
         }
-        
+
         const toolCall: ToolCallBlock = {
           type: 'tool_call',
           toolCallId: delta.toolCallId,
@@ -334,18 +333,18 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
           args: delta.input as Record<string, unknown>,
         };
         toolCalls.push(toolCall);
-        
+
         // Yield the tool_call event first
         yield { type: 'tool_call', toolCall };
-        
+
         // Also add to contentBlocks for the final message
         contentBlocks.push(toolCall);
-        
+
         // Note: Approval and execution are now handled in the tool's execute function
         // via the needsApproval option. The SDK will call execute after emitting tool-call.
         // We don't need to manually execute here anymore.
         break;
-        
+
       case 'tool-result':
         // AI SDK v6 emits tool-result events after tool execution completes
         // Extract the result from the output
@@ -362,7 +361,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
         } else {
           result = delta.output;
         }
-        
+
         // Yield the tool_result event for streaming to client
         yield {
           type: 'tool_result',
@@ -370,7 +369,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
           toolName: delta.toolName,
           result,
         };
-        
+
         // Also add to contentBlocks for the final message
         const isErrorResult = !!(result && typeof result === 'object' && 'error' in result);
         contentBlocks.push({
@@ -393,11 +392,11 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
   // Prefer totalUsage for multi-step generations (when tool calls cause multiple steps)
   const totalUsagePromise = result.totalUsage;
   const usagePromise = result.usage;
-  
+
   // Await both promises to get the values
   const [totalUsage, usage] = await Promise.all([totalUsagePromise, usagePromise]);
   const usageData = totalUsage ?? usage;
-  
+
   if (usageData) {
     // Use resolvedModelId directly if provided, otherwise default to 'gpt-4o'
     const actualModelId = resolvedModelId || 'gpt-4o';
@@ -425,7 +424,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
 export async function chat(options: ChatOptions): Promise<ChatResult> {
   let finalMessage: Message | null = null;
   const toolCalls: ToolCallBlock[] = [];
-  
+
   for await (const event of streamChat(options)) {
     if (event.type === 'tool_call') {
       toolCalls.push(event.toolCall);
@@ -434,7 +433,7 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
       finalMessage = event.message;
     }
   }
-  
+
   return {
     message: finalMessage!,
     toolCalls,

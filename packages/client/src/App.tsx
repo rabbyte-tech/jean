@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock } from '@ai-agent/shared';
-import SessionList from './components/SessionList';
-import ChatView from './components/ChatView';
+import SessionList from '@/components/SessionList';
+import ChatView from '@/components/ChatView';
 import './App.css';
 
 const WS_URL = `ws://${window.location.hostname}:3000/ws`;

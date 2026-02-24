@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Session, Message, Preconfig } from '@ai-agent/shared';
-import MessageComponent from './Message';
-import TokenUsage from './TokenUsage';
-import ModelSelector from './ModelSelector';
+import MessageComponent from '@/components/Message';
+import TokenUsage from '@/components/TokenUsage';
+import ModelSelector from '@/components/ModelSelector';
 import './ChatView.css';
 
 interface Props {
