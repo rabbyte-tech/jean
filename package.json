@@ -10,7 +10,8 @@
     "dev": "bun run dev:server & bun run dev:client",
     "dev:server": "cd packages/server && bun --watch --env-file=../../.env src/index.ts",
     "dev:client": "cd packages/client && bun run dev",
-    "build": "bun run --filter '*' build"
+    "build": "bun run --filter '*' build",
+    "typecheck": "bun run --filter '*' typecheck"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

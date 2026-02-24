@@ -29,7 +29,7 @@ export function updateToolApproval(id: string, updates: { status: ToolApprovalSt
   const db = getDatabase();
   db.run(`
     UPDATE tool_approvals SET status = ?, responded_at = ? WHERE id = ?
-  `, updates.status, updates.respondedAt, id);
+  `, [updates.status, updates.respondedAt, id]);
 }
 
 export function getToolApproval(id: string): ToolApproval | null {

@@ -38,7 +38,7 @@ export function listMessages(sessionId: string): Message[] {
 
 export function deleteMessages(sessionId: string): number {
   const db = getDatabase();
-  const result = db.run('DELETE FROM messages WHERE session_id = ?', sessionId);
+  const result = db.run('DELETE FROM messages WHERE session_id = ?', [sessionId]);
   return result.changes;
 }
 

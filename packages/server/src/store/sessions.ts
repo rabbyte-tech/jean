@@ -100,7 +100,7 @@ export function updateSession(id: string, updates: Partial<Pick<Session, 'title'
 
 export function deleteSession(id: string): boolean {
   const db = getDatabase();
-  const result = db.run('DELETE FROM sessions WHERE id = ?', id);
+  const result = db.run('DELETE FROM sessions WHERE id = ?', [id]);
   return result.changes > 0;
 }
 

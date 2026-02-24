@@ -8,18 +8,22 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
   "dependencies": {
     "@ai-agent/shared": "workspace:*",
     "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/google": "^1.0.0",
     "@ai-sdk/openai": "^1.0.0",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "ai": "^6.0.0",
     "hono": "^4.0.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.1.0",
     "@types/node": "^22.10.1",
+    "bun-types": "^1.3.9",
     "typescript": "^5.7.2"
   }
 }

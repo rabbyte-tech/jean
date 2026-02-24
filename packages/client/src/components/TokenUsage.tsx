@@ -41,7 +41,15 @@ export default function TokenUsage({
   return (
     <div className="token-usage">
       <div className="token-row">
-        <span className="token-label">Context:</span>
+        <span className="token-label">Prompt:</span>
+        <span className="token-count">{formatCompact(promptTokens)}</span>
+      </div>
+      <div className="token-row">
+        <span className="token-label">Completion:</span>
+        <span className="token-count">{formatCompact(completionTokens)}</span>
+      </div>
+      <div className="token-row">
+        <span className="token-label">Total:</span>
         <span className="token-count">
           {formatCompact(totalTokens)}/{formatCompact(contextWindow)}
         </span>

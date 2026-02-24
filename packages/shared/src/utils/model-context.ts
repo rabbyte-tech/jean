@@ -16,7 +16,7 @@ export function getModelContextWindow(_modelId: string): number {
  * @param modelId - The model identifier (unused, kept for API compatibility)
  * @returns Percentage (0-100) of context window used, or 0 if context window is unknown
  */
-export function getContextWindowPercentage(tokensUsed: number, _modelId: string): number {
+export function getContextWindowPercentage(_tokensUsed: number, _modelId: string): number {
   // With no context window info, we can't calculate percentage
   return 0;
 }

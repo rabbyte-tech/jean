@@ -8,14 +8,15 @@ import { listMessages, createMessage } from './store/messages';
 import { streamChat } from './core/agent';
 import { createPendingApproval, resolveApproval } from './core/approvals';
 import { getModelsConfig, findModel } from './config';
+import type { ServerWebSocket } from 'bun';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Store connected clients with their session info
-const clients = new Map<WebSocket, { sessionId?: string }>();
+const clients = new Map<ServerWebSocket, { sessionId?: string }>();
 
-function getWsForSession(sessionId: string): WebSocket | undefined {
+function getWsForSession(sessionId: string): ServerWebSocket | undefined {
   for (const [ws, data] of clients.entries()) {
     if (data.sessionId === sessionId) {
       return ws;
@@ -24,7 +25,7 @@ function getWsForSession(sessionId: string): WebSocket | undefined {
   return undefined;
 }
 
-function broadcast(message: ServerMessage, excludeWs?: WebSocket) {
+function broadcast(message: ServerMessage, excludeWs?: ServerWebSocket) {
   const messageStr = JSON.stringify(message);
   for (const [ws] of clients.entries()) {
     if (ws !== excludeWs && ws.readyState === WebSocket.OPEN) {
@@ -69,7 +70,7 @@ async function main() {
     port: PORT,
     hostname: HOST,
     
-    async fetch(req) {
+    async fetch(req: Request): Promise<Response | undefined> {
       const url = new URL(req.url);
       
       // Handle WebSocket upgrade
@@ -86,17 +87,17 @@ async function main() {
     },
     
     websocket: {
-      open(ws) {
+      open(ws: ServerWebSocket) {
         clients.set(ws, {});
         console.log('Client connected. Total clients:', clients.size);
       },
       
-      close(ws) {
+      close(ws: ServerWebSocket) {
         clients.delete(ws);
         console.log('Client disconnected. Total clients:', clients.size);
       },
       
-      async message(ws, message) {
+      async message(ws: ServerWebSocket, message: string | Buffer) {
         try {
           const msg: ClientMessage = JSON.parse(message.toString());
           await handleClientMessage(ws, msg);
@@ -126,11 +127,11 @@ async function main() {
   });
 }
 
-function send(ws: WebSocket, msg: ServerMessage) {
+function send(ws: ServerWebSocket, msg: ServerMessage) {
   ws.send(JSON.stringify(msg));
 }
 
-async function handleClientMessage(ws: WebSocket, msg: ClientMessage): Promise<void> {
+async function handleClientMessage(ws: ServerWebSocket, msg: ClientMessage): Promise<void> {
   switch (msg.type) {
     case 'session.create': {
       const session = createSession({
@@ -217,7 +218,7 @@ async function handleClientMessage(ws: WebSocket, msg: ClientMessage): Promise<v
   }
 }
 
-async function handleChat(ws: WebSocket, sessionId: string, content: string) {
+async function handleChat(ws: ServerWebSocket, sessionId: string, content: string) {
   const session = getSession(sessionId);
   if (!session) {
     send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
