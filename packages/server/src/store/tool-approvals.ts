@@ -1,6 +1,18 @@
 import { getDatabase } from './index';
 import type { ToolApproval, ToolApprovalStatus } from '@ai-agent/shared';
 
+// Interface for raw database row from tool_approvals table
+interface ToolApprovalRow {
+  id: string;
+  session_id: string;
+  tool_call_id: string;
+  tool_name: string;
+  args: string;
+  status: string;
+  requested_at: string;
+  responded_at: string | null;
+}
+
 export function createToolApproval(approval: Omit<ToolApproval, 'respondedAt'> & { respondedAt?: string | null }): ToolApproval {
   const db = getDatabase();
   const a: ToolApproval = {
@@ -34,25 +46,25 @@ export function updateToolApproval(id: string, updates: { status: ToolApprovalSt
 
 export function getToolApproval(id: string): ToolApproval | null {
   const db = getDatabase();
-  const row = db.query('SELECT * FROM tool_approvals WHERE id = ?').get(id) as any;
+  const row = db.query('SELECT * FROM tool_approvals WHERE id = ?').get(id) as ToolApprovalRow | undefined;
   if (!row) return null;
   return mapRowToToolApproval(row);
 }
 
 export function getToolApprovalByCallId(toolCallId: string): ToolApproval | null {
   const db = getDatabase();
-  const row = db.query('SELECT * FROM tool_approvals WHERE tool_call_id = ?').get(toolCallId) as any;
+  const row = db.query('SELECT * FROM tool_approvals WHERE tool_call_id = ?').get(toolCallId) as ToolApprovalRow | undefined;
   if (!row) return null;
   return mapRowToToolApproval(row);
 }
 
 export function listPendingApprovals(sessionId: string): ToolApproval[] {
   const db = getDatabase();
-  const rows = db.query('SELECT * FROM tool_approvals WHERE session_id = ? AND status = ? ORDER BY requested_at ASC').all(sessionId, 'pending') as any[];
+  const rows = db.query('SELECT * FROM tool_approvals WHERE session_id = ? AND status = ? ORDER BY requested_at ASC').all(sessionId, 'pending') as ToolApprovalRow[];
   return rows.map(mapRowToToolApproval);
 }
 
-function mapRowToToolApproval(row: any): ToolApproval {
+function mapRowToToolApproval(row: ToolApprovalRow): ToolApproval {
   return {
     id: row.id,
     sessionId: row.session_id,

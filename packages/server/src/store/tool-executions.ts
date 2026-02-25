@@ -1,6 +1,19 @@
 import { getDatabase } from './index';
 import type { ToolExecution } from '@ai-agent/shared';
 
+// Interface for raw database row from tool_executions table
+interface ToolExecutionRow {
+  id: string;
+  message_id: string;
+  tool_call_id: string;
+  tool_name: string;
+  args: string;
+  result: string | null;
+  error: string | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
 export function createToolExecution(execution: Omit<ToolExecution, 'completedAt'> & { completedAt?: string | null }): ToolExecution {
   const db = getDatabase();
   const e: ToolExecution = {
@@ -29,7 +42,7 @@ export function createToolExecution(execution: Omit<ToolExecution, 'completedAt'
 export function updateToolExecution(id: string, updates: { result?: unknown; error?: string | null; completedAt?: string }): void {
   const db = getDatabase();
   const setClauses: string[] = [];
-  const values: any[] = [];
+  const values: (string | null)[] = [];
   
   if (updates.result !== undefined) {
     setClauses.push('result = ?');
@@ -52,18 +65,18 @@ export function updateToolExecution(id: string, updates: { result?: unknown; err
 
 export function getToolExecution(id: string): ToolExecution | null {
   const db = getDatabase();
-  const row = db.query('SELECT * FROM tool_executions WHERE id = ?').get(id) as any;
+  const row = db.query('SELECT * FROM tool_executions WHERE id = ?').get(id) as ToolExecutionRow | undefined;
   if (!row) return null;
   return mapRowToToolExecution(row);
 }
 
 export function listToolExecutions(messageId: string): ToolExecution[] {
   const db = getDatabase();
-  const rows = db.query('SELECT * FROM tool_executions WHERE message_id = ? ORDER BY started_at ASC').all(messageId) as any[];
+  const rows = db.query('SELECT * FROM tool_executions WHERE message_id = ? ORDER BY started_at ASC').all(messageId) as ToolExecutionRow[];
   return rows.map(mapRowToToolExecution);
 }
 
-function mapRowToToolExecution(row: any): ToolExecution {
+function mapRowToToolExecution(row: ToolExecutionRow): ToolExecution {
   return {
     id: row.id,
     messageId: row.message_id,

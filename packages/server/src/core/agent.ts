@@ -1,4 +1,4 @@
-import { streamText, tool, stepCountIs, jsonSchema, type LanguageModel } from 'ai';
+import { streamText, tool, stepCountIs, jsonSchema, type LanguageModel, type Tool } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import type { Message, ContentBlock, ToolCallBlock, Preconfig } from '@ai-agent/shared';
@@ -113,8 +113,17 @@ export interface ChatResult {
   toolCalls: ToolCallBlock[];
 }
 
+// Type for AI SDK message content - can be string or array of content parts
+type AiSdkContent = string | Array<{
+  type: 'text' | 'tool-result';
+  text?: string;
+  toolCallId?: string;
+  toolName?: string;
+  value?: unknown;
+}>;
+
 async function convertToAiSdkMessages(messages: Message[]) {
-  const result: { role: 'user' | 'assistant' | 'system' | 'tool'; content: any }[] = [];
+  const result: { role: 'user' | 'assistant' | 'system' | 'tool'; content: AiSdkContent }[] = [];
 
   // First, build a map of toolCallId -> toolName from all messages
   const toolCallIdToName: Record<string, string> = {};
@@ -206,8 +215,8 @@ async function convertToAiSdkMessages(messages: Message[]) {
 async function buildAiSdkTools(
   toolNames: string[],
   onToolApprovalRequired?: (toolCall: ToolCallBlock, dangerous: boolean) => Promise<boolean>
-): Promise<Record<string, any>> {
-  const tools: Record<string, any> = {};
+): Promise<Record<string, Tool>> {
+  const tools: Record<string, Tool> = {};
 
   for (const name of toolNames) {
     const discoveredTool = await getTool(name);
@@ -218,7 +227,7 @@ async function buildAiSdkTools(
 
     tools[name] = tool({
       description: definition.description,
-      inputSchema: jsonSchema(definition.inputSchema) as any,
+      inputSchema: jsonSchema(definition.inputSchema),
       // Don't use AI SDK's needsApproval - we handle approval ourselves in execute
       // needsApproval,
       execute: async (args: Record<string, unknown>) => {
@@ -296,7 +305,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
     model,
     system: systemMessage,
     messages: aiMessages,
-    tools: aiTools as any,
+    tools: aiTools,
     maxOutputTokens: LLM_MAX_TOKENS,
     temperature: (preconfig.settings?.temperature ?? LLM_TEMPERATURE) as number,
     stopWhen: stepCountIs(10),

@@ -1,11 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Session, Message, ServerMessage, ClientMessage, Preconfig } from '@ai-agent/shared';
+import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock } from '@ai-agent/shared';
 import SessionList from '@/components/SessionList';
 import ChatView from '@/components/ChatView';
 import './App.css';
 
 const WS_URL = `ws://${window.location.hostname}:3000/ws`;
 const API_URL = `http://${window.location.hostname}:3000/api`;
+
+// Type for client message payloads based on message type
+type ClientMessagePayload = 
+  | { preconfigId?: string; title?: string }
+  | { sessionId: string }
+  | { sessionId: string; content: string }
+  | { toolCallId: string; approved: boolean }
+  | { sessionId: string; preconfigId?: string }
+  | { sessionId: string; modelId: string; providerId: string };
 
 function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -170,7 +179,7 @@ function App() {
                 // Check if a tool_call with this toolName and needsApproval already exists
                 // (race condition: tool.approval_required may have added it already)
                 const existingToolCall = m.content.find(
-                  block => block.type === 'tool_call' && block.toolName === msg.toolCall.toolName && (block as any).needsApproval
+                  block => block.type === 'tool_call' && block.toolName === msg.toolCall.toolName && (block as ToolCallBlock).needsApproval
                 );
                 if (existingToolCall) {
                   // Block already exists from tool.approval_required - keep it as-is
@@ -211,7 +220,7 @@ function App() {
                   // Remove pending flag from tool_call and add tool_result
                   const updatedContent = m.content.map(block => {
                     if (block.type === 'tool_call' && block.toolCallId === msg.toolCallId) {
-                      const { pending: _pending, ...rest } = block as any;
+                      const { pending: _pending, ...rest } = block as ToolCallBlock;
                       return rest; // Remove pending flag
                     }
                     return block;
@@ -251,12 +260,12 @@ function App() {
             for (let j = 0; j < m.content.length; j++) {
               const block = m.content[j];
               if (block.type === 'tool_call') {
-                console.log(`[DEBUG] Found tool_call: toolName=${block.toolName}, needsApproval=${(block as any).needsApproval}`);
+                console.log(`[DEBUG] Found tool_call: toolName=${block.toolName}, needsApproval=${(block as ToolCallBlock).needsApproval}`);
               }
               if (
                 block.type === 'tool_call' && 
                 block.toolName === msg.toolName &&
-                !(block as any).needsApproval
+                !(block as ToolCallBlock).needsApproval
               ) {
                 console.log('[DEBUG] Match found! Updating block');
                 // Found it! Update this block
@@ -368,14 +377,14 @@ function App() {
         }
         break;
     }
-  }, [currentSession, messagesBySession]);
+  }, [currentSession, defaultModel]);
 
   // Keep the ref updated with the latest handler
   useEffect(() => {
     handleServerMessageRef.current = handleServerMessage;
   }, [handleServerMessage]);
 
-  const sendMessage = useCallback((type: ClientMessage['type'], payload: any) => {
+  const sendMessage = useCallback((type: ClientMessage['type'], payload: ClientMessagePayload) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type, ...payload }));
     }
@@ -433,7 +442,7 @@ function App() {
               ...m,
               content: m.content.map(block => {
                 if (block.type === 'tool_call' && block.toolCallId === toolCallId) {
-                  const { needsApproval: _needsApproval, dangerous: _dangerous, ...rest } = block as any;
+                  const { needsApproval: _needsApproval, dangerous: _dangerous, ...rest } = block as ToolCallBlock;
                   return {
                     ...rest,
                     pending: approved, // Show pending if approved, otherwise stays without pending (denied)

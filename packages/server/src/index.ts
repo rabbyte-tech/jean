@@ -2,7 +2,7 @@ import { createApp } from './app';
 import { initializePreconfigs, getPreconfig, getDefaultPreconfig } from './core/preconfig';
 import { scanTools } from './tools';
 import { closeDatabase } from './store';
-import type { ServerMessage, ClientMessage, Message } from '@ai-agent/shared';
+import type { ServerMessage, ClientMessage, Message, ToolCallBlock } from '@ai-agent/shared';
 import { createSession, getSession, updateSession } from './store/sessions';
 import { listMessages, createMessage } from './store/messages';
 import { streamChat } from './core/agent';
@@ -303,7 +303,7 @@ async function handleChat(ws: ServerWebSocket, sessionId: string, content: strin
   broadcast({ type: 'chat.start', sessionId, messageId: assistantMsgId });
 
   // Create approval callback that communicates with client
-  const onToolApprovalRequired = async (toolCall: any, dangerous: boolean): Promise<boolean> => {
+  const onToolApprovalRequired = async (toolCall: ToolCallBlock, dangerous: boolean): Promise<boolean> => {
     // Send approval request to client
     const clientWs = getWsForSession(sessionId);
     
@@ -391,9 +391,10 @@ async function handleChat(ws: ServerWebSocket, sessionId: string, content: strin
         }
       }
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Chat failed';
     console.error('Chat error:', err);
-    send(ws, { type: 'error', code: 'chat_error', message: err.message || 'Chat failed' });
+    send(ws, { type: 'error', code: 'chat_error', message });
   }
 }
 

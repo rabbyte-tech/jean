@@ -101,13 +101,15 @@ export function createApp() {
       const status = c.req.query('status') as SessionStatus | undefined;
       const sessions = listSessions(status);
       return c.json({ sessions });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      const stack = err instanceof Error ? err.stack : undefined;
       console.log('\n');
       console.log('========== SESSIONS ERROR ==========');
-      console.log('Error:', err?.message || err);
-      console.log('Stack:', err?.stack);
+      console.log('Error:', message);
+      console.log('Stack:', stack);
       console.log('====================================\n');
-      return c.json({ error: 'Internal error', message: err?.message || String(err) }, 500);
+      return c.json({ error: 'Internal error', message }, 500);
     }
   });
 

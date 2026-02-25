@@ -1,6 +1,22 @@
 import { getDatabase } from './index';
 import type { Session, SessionStatus } from '@ai-agent/shared';
 
+// Interface for raw database row from sessions table
+interface SessionRow {
+  id: string;
+  preconfig_id: string | null;
+  title: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  metadata: string | null;
+  selected_model: string | null;
+  selected_provider: string | null;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
 export function createSession(session: Omit<Session, 'createdAt' | 'updatedAt'> & { createdAt?: string; updatedAt?: string }): Session {
   const db = getDatabase();
   const now = new Date().toISOString();
@@ -30,7 +46,7 @@ export function createSession(session: Omit<Session, 'createdAt' | 'updatedAt'> 
 
 export function getSession(id: string): Session | null {
   const db = getDatabase();
-  const row = db.query('SELECT * FROM sessions WHERE id = ?').get(id) as any;
+  const row = db.query('SELECT * FROM sessions WHERE id = ?').get(id) as SessionRow | undefined;
   if (!row) return null;
   return mapRowToSession(row);
 }
@@ -40,11 +56,11 @@ export function listSessions(status?: SessionStatus): Session[] {
   const query = 'SELECT * FROM sessions ORDER BY updated_at DESC';
   
   if (status) {
-    const rows = db.query('SELECT * FROM sessions WHERE status = ? ORDER BY updated_at DESC').all(status) as any[];
+    const rows = db.query('SELECT * FROM sessions WHERE status = ? ORDER BY updated_at DESC').all(status) as SessionRow[];
     return rows.map(mapRowToSession);
   }
   
-  const rows = db.query(query).all() as any[];
+  const rows = db.query(query).all() as SessionRow[];
   return rows.map(mapRowToSession);
 }
 
@@ -53,7 +69,7 @@ export function updateSession(id: string, updates: Partial<Pick<Session, 'title'
   const now = new Date().toISOString();
   
   const setClauses: string[] = ['updated_at = ?'];
-  const values: any[] = [now];
+  const values: (string | number | null)[] = [now];
   
   if (updates.title !== undefined) {
     setClauses.push('title = ?');
@@ -104,7 +120,7 @@ export function deleteSession(id: string): boolean {
   return result.changes > 0;
 }
 
-function mapRowToSession(row: any): Session {
+function mapRowToSession(row: SessionRow): Session {
   return {
     id: row.id,
     preconfigId: row.preconfig_id,

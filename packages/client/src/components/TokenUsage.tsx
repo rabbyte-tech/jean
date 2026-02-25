@@ -9,21 +9,23 @@ interface TokenUsageProps {
   contextWindow?: number;  // Actual context window from model config
 }
 
-export default function TokenUsage({ 
-  promptTokens, 
-  completionTokens, 
-  totalTokens, 
+export default function TokenUsage({
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  promptTokens,
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  completionTokens,
+  totalTokens,
   modelName,
   contextWindow: contextWindowProp
 }: TokenUsageProps) {
   // Use passed contextWindow if provided, otherwise fall back to lookup
   const actualContextWindow = contextWindowProp ?? getModelContextWindow(modelName);
-  
+
   // If no LLM interaction yet (totalTokens === 0), show context as 0
   // Otherwise, show the actual context window from the model
   const contextWindow = totalTokens === 0 ? 0 : actualContextWindow;
   const percentage = contextWindow === 0 ? 0 : Math.min(100, Math.round((totalTokens / contextWindow) * 100));
-  
+
   // Determine color based on usage percentage
   const getColorClass = () => {
     if (percentage >= 90) return 'critical';
@@ -41,14 +43,6 @@ export default function TokenUsage({
   return (
     <div className="token-usage">
       <div className="token-row">
-        <span className="token-label">Prompt:</span>
-        <span className="token-count">{formatCompact(promptTokens)}</span>
-      </div>
-      <div className="token-row">
-        <span className="token-label">Completion:</span>
-        <span className="token-count">{formatCompact(completionTokens)}</span>
-      </div>
-      <div className="token-row">
         <span className="token-label">Total:</span>
         <span className="token-count">
           {formatCompact(totalTokens)}/{formatCompact(contextWindow)}
@@ -56,7 +50,7 @@ export default function TokenUsage({
       </div>
       <div className="token-row">
         <div className="token-bar-container">
-          <div 
+          <div
             className={`token-bar ${getColorClass()}`}
             style={{ width: `${percentage}%` }}
           />
