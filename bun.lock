@@ -14,10 +14,10 @@
       },
     },
     "packages/client": {
-      "name": "@ai-agent/client",
+      "name": "@jean/client",
       "version": "0.1.0",
       "dependencies": {
-        "@ai-agent/shared": "workspace:*",
+        "@jean/shared": "workspace:*",
         "prism-react-renderer": "^2.4.1",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
@@ -33,13 +33,13 @@
       },
     },
     "packages/server": {
-      "name": "@ai-agent/server",
+      "name": "@jean/server",
       "version": "1.0.0",
       "dependencies": {
-        "@ai-agent/shared": "workspace:*",
         "@ai-sdk/anthropic": "^1.0.0",
         "@ai-sdk/google": "^1.0.0",
         "@ai-sdk/openai": "^1.0.0",
+        "@jean/shared": "workspace:*",
         "@openrouter/ai-sdk-provider": "^2.2.3",
         "ai": "^6.0.0",
         "hono": "^4.0.0",
@@ -52,17 +52,11 @@
       },
     },
     "packages/shared": {
-      "name": "@ai-agent/shared",
+      "name": "@jean/shared",
       "version": "0.1.0",
     },
   },
   "packages": {
-    "@ai-agent/client": ["@ai-agent/client@workspace:packages/client"],
-
-    "@ai-agent/server": ["@ai-agent/server@workspace:packages/server"],
-
-    "@ai-agent/shared": ["@ai-agent/shared@workspace:packages/shared"],
-
     "@ai-sdk/anthropic": ["@ai-sdk/anthropic@1.2.12", "", { "dependencies": { "@ai-sdk/provider": "1.1.3", "@ai-sdk/provider-utils": "2.2.8" }, "peerDependencies": { "zod": "^3.0.0" } }, "sha512-YSzjlko7JvuiyQFmI9RN1tNZdEiZxc+6xld/0tq/VkJaHpEzGAb1yiNxxvmYVcjvfu/PcvCxAAYXmTYQQ63IHQ=="],
 
     "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.53", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.15", "@vercel/oidc": "3.1.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-QT3FEoNARMRlk8JJVR7L98exiK9C8AGfrEJVbRxBT1yIXKs/N19o/+PsjTRVsARgDJNcy9JbJp1FspKucEat0Q=="],
@@ -188,6 +182,12 @@
     "@humanwhocodes/module-importer": ["@humanwhocodes/module-importer@1.0.1", "", {}, "sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA=="],
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
+
+    "@jean/client": ["@jean/client@workspace:packages/client"],
+
+    "@jean/server": ["@jean/server@workspace:packages/server"],
+
+    "@jean/shared": ["@jean/shared@workspace:packages/shared"],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 

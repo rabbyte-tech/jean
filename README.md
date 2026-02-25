@@ -1,4 +1,4 @@
-# AI Agent Server
+# Jean
 
 A monorepo for building and deploying AI agent applications with a modern tech stack.
 
@@ -17,7 +17,7 @@ A monorepo for building and deploying AI agent applications with a modern tech s
 ## Structure
 
 ```
-ai-agent-server/
+jean/
 ├── packages/
 │   ├── server/          # Backend API server
 │   ├── client/          # Frontend React application

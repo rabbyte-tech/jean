@@ -1,5 +1,5 @@
 import { getDatabase } from './index';
-import type { ToolApproval, ToolApprovalStatus } from '@ai-agent/shared';
+import type { ToolApproval, ToolApprovalStatus } from '@jean/shared';
 
 // Interface for raw database row from tool_approvals table
 interface ToolApprovalRow {

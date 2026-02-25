@@ -1,5 +1,5 @@
 import { getDatabase } from './index';
-import type { Session, SessionStatus } from '@ai-agent/shared';
+import type { Session, SessionStatus } from '@jean/shared';
 
 // Interface for raw database row from sessions table
 interface SessionRow {
@@ -110,7 +110,7 @@ export function updateSession(id: string, updates: Partial<Pick<Session, 'title'
   
   values.push(id);
   
-  db.run(`UPDATE sessions SET ${setClauses.join(', ')} WHERE id = ?`, ...values);
+  db.run(`UPDATE sessions SET ${setClauses.join(', ')} WHERE id = ?`, values as (string | number)[]);
   return getSession(id);
 }
 

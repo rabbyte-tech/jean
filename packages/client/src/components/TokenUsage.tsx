@@ -1,4 +1,4 @@
-import { getModelContextWindow } from '@ai-agent/shared';
+import { getModelContextWindow } from '@jean/shared';
 import './TokenUsage.css';
 
 interface TokenUsageProps {
@@ -28,8 +28,8 @@ export default function TokenUsage({
 
   // Determine color based on usage percentage
   const getColorClass = () => {
-    if (percentage >= 90) return 'critical';
-    if (percentage >= 70) return 'warning';
+    if (percentage >= 60) return 'critical';
+    if (percentage >= 40) return 'warning';
     return 'normal';
   };
 

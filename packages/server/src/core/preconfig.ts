@@ -1,7 +1,7 @@
 import { readdir, readFile, writeFile, unlink, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
-import type { Preconfig } from '@ai-agent/shared';
+import type { Preconfig } from '@jean/shared';
 import { randomUUID } from 'crypto';
 
 const PRECONFIGS_DIR = process.env.PRECONFIGS_PATH || join(homedir(), '.jean2', 'preconfigs');

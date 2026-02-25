@@ -1,4 +1,4 @@
-import type { ToolCallBlock } from '@ai-agent/shared';
+import type { ToolCallBlock } from '@jean/shared';
 
 interface PendingApproval {
   toolCall: ToolCallBlock;

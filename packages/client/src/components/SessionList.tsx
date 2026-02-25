@@ -1,4 +1,4 @@
-import type { Session, Preconfig } from '@ai-agent/shared';
+import type { Session, Preconfig } from '@jean/shared';
 import './SessionList.css';
 
 interface Props {

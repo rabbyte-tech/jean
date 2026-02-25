@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
-import type { ToolRuntime } from '@ai-agent/shared';
+import type { ToolRuntime } from '@jean/shared';
 import type { DiscoveredTool, ToolResult } from './types';
 
 const RUNTIME_COMMANDS: Record<ToolRuntime, string[]> = {

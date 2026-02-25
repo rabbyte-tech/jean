@@ -1,4 +1,4 @@
-import type { ToolDefinition, ToolRuntime } from '@ai-agent/shared';
+import type { ToolDefinition, ToolRuntime } from '@jean/shared';
 
 export type { ToolDefinition, ToolRuntime };
 

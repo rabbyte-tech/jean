@@ -13,7 +13,7 @@ import { prettyJSON } from 'hono/pretty-json';
 // Import types from shared
 import type {
   SessionStatus,
-} from '@ai-agent/shared';
+} from '@jean/shared';
 
 // Import store operations
 import {

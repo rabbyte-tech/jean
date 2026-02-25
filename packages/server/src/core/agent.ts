@@ -1,7 +1,7 @@
-import { streamText, tool, stepCountIs, jsonSchema, type LanguageModel, type Tool } from 'ai';
+import { streamText, tool, stepCountIs, jsonSchema, type LanguageModel, type Tool, type ModelMessage } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import type { Message, ContentBlock, ToolCallBlock, Preconfig } from '@ai-agent/shared';
+import type { Message, ContentBlock, ToolCallBlock, Preconfig } from '@jean/shared';
 import { getTool, executeTool } from '@/tools';
 import { findModel } from '@/config';
 import { randomUUID } from 'crypto';
@@ -122,7 +122,7 @@ type AiSdkContent = string | Array<{
   value?: unknown;
 }>;
 
-async function convertToAiSdkMessages(messages: Message[]) {
+async function convertToAiSdkMessages(messages: Message[]): Promise<ModelMessage[]> {
   const result: { role: 'user' | 'assistant' | 'system' | 'tool'; content: AiSdkContent }[] = [];
 
   // First, build a map of toolCallId -> toolName from all messages
@@ -209,7 +209,7 @@ async function convertToAiSdkMessages(messages: Message[]) {
     }
   }
 
-  return result;
+  return result as unknown as ModelMessage[];
 }
 
 async function buildAiSdkTools(
@@ -286,7 +286,7 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
   | { type: 'usage'; usage: { promptTokens: number; completionTokens: number; totalTokens: number }; model: string }
   | { type: 'complete'; message: Message }
 > {
-  const { _sessionId, preconfig, messages, onToolApprovalRequired, modelId, providerId } = options;
+  const { sessionId: _sessionId, preconfig, messages, onToolApprovalRequired, modelId, providerId } = options;
 
   // Resolve model: session override > preconfig > env default
   const resolvedModelId = modelId || (preconfig.model ?? undefined);

@@ -1,8 +1,8 @@
 {
-  "name": "ai-agent-server",
+  "name": "jean",
   "version": "0.1.0",
   "private": true,
-  "description": "AI Agent Server Monorepo",
+  "description": "Jean - AI Agent Monorepo",
   "workspaces": [
     "packages/*"
   ],

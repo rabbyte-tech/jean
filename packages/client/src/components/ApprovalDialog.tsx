@@ -1,4 +1,4 @@
-import type { ToolCallBlock } from '@ai-agent/shared';
+import type { ToolCallBlock } from '@jean/shared';
 import './ApprovalDialog.css';
 
 interface Props {

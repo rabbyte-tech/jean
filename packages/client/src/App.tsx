@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock } from '@ai-agent/shared';
+import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock } from '@jean/shared';
 import SessionList from '@/components/SessionList';
 import ChatView from '@/components/ChatView';
 import './App.css';

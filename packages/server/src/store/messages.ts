@@ -1,5 +1,5 @@
 import { getDatabase } from './index';
-import type { Message, ContentBlock } from '@ai-agent/shared';
+import type { Message, ContentBlock } from '@jean/shared';
 
 // Interface for raw database row from messages table
 interface MessageRow {

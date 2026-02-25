@@ -1,5 +1,5 @@
 import { getDatabase } from './index';
-import type { ToolExecution } from '@ai-agent/shared';
+import type { ToolExecution } from '@jean/shared';
 
 // Interface for raw database row from tool_executions table
 interface ToolExecutionRow {
@@ -59,7 +59,7 @@ export function updateToolExecution(id: string, updates: { result?: unknown; err
   
   if (setClauses.length > 0) {
     values.push(id);
-    db.run(`UPDATE tool_executions SET ${setClauses.join(', ')} WHERE id = ?`, ...values);
+    db.run(`UPDATE tool_executions SET ${setClauses.join(', ')} WHERE id = ?`, values);
   }
 }
 
