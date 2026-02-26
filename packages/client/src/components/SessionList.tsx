@@ -1,4 +1,5 @@
-import type { Session, Preconfig } from '@jean/shared';
+import type { Session, Preconfig, Workspace } from '@jean/shared';
+import WorkspaceSelector from './WorkspaceSelector';
 import './SessionList.css';
 
 interface Props {
@@ -9,6 +10,14 @@ interface Props {
   onCreateSession: (preconfigId?: string, title?: string) => void;
   onResumeSession: (sessionId: string) => void;
   onCloseSession: (sessionId: string) => void;
+  
+  // Workspace props
+  workspaces: Workspace[];
+  activeWorkspace: Workspace | null;
+  onSelectWorkspace: (workspace: Workspace) => void;
+  onCreateVirtualWorkspace: () => void;
+  onCreatePhysicalWorkspace: (path: string) => void;
+  onDeleteWorkspace: (id: string) => void;
 }
 
 export default function SessionList({
@@ -19,11 +28,27 @@ export default function SessionList({
   onCreateSession,
   onResumeSession,
   onCloseSession,
+  workspaces,
+  activeWorkspace,
+  onSelectWorkspace,
+  onCreateVirtualWorkspace,
+  onCreatePhysicalWorkspace,
+  onDeleteWorkspace,
 }: Props) {
   const defaultPreconfig = preconfigs.find(p => p.isDefault) || preconfigs[0];
   
   return (
     <div className="session-list">
+      {/* Workspace selector at the top */}
+      <WorkspaceSelector
+        workspaces={workspaces}
+        activeWorkspace={activeWorkspace}
+        onSelectWorkspace={onSelectWorkspace}
+        onCreateVirtualWorkspace={onCreateVirtualWorkspace}
+        onCreatePhysicalWorkspace={onCreatePhysicalWorkspace}
+        onDeleteWorkspace={onDeleteWorkspace}
+      />
+      
       <div className="session-list-header">
         <h3>Sessions</h3>
         <span className={`status ${connected ? 'connected' : 'disconnected'}`}>

@@ -1,10 +1,12 @@
 import { getDatabase } from './index';
-import type { Session, SessionStatus } from '@jean/shared';
+import type { Session, SessionStatus, Workspace } from '@jean/shared';
+import { getWorkspace } from './workspaces';
 
 // Interface for raw database row from sessions table
 interface SessionRow {
   id: string;
   preconfig_id: string | null;
+  workspace_id: string | null;
   title: string;
   status: string;
   created_at: string;
@@ -27,10 +29,11 @@ export function createSession(session: Omit<Session, 'createdAt' | 'updatedAt'> 
   };
   
   db.run(`
-    INSERT INTO sessions (id, preconfig_id, title, status, created_at, updated_at, metadata, selected_model, selected_provider, prompt_tokens, completion_tokens, total_tokens)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0)
+    INSERT INTO sessions (id, workspace_id, preconfig_id, title, status, created_at, updated_at, metadata, selected_model, selected_provider, prompt_tokens, completion_tokens, total_tokens)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0)
   `, [
     s.id,
+    s.workspaceId,
     s.preconfigId,
     s.title,
     s.status,
@@ -49,6 +52,16 @@ export function getSession(id: string): Session | null {
   const row = db.query('SELECT * FROM sessions WHERE id = ?').get(id) as SessionRow | undefined;
   if (!row) return null;
   return mapRowToSession(row);
+}
+
+export function getSessionWithWorkspace(sessionId: string): { session: Session; workspace: Workspace | null } | null {
+  const session = getSession(sessionId);
+  if (!session) {
+    return null;
+  }
+  
+  const workspace = session.workspaceId ? getWorkspace(session.workspaceId) : null;
+  return { session, workspace };
 }
 
 export function listSessions(status?: SessionStatus): Session[] {
@@ -120,10 +133,17 @@ export function deleteSession(id: string): boolean {
   return result.changes > 0;
 }
 
+export function listSessionsByWorkspace(workspaceId: string): Session[] {
+  const db = getDatabase();
+  const rows = db.query('SELECT * FROM sessions WHERE workspace_id = ? ORDER BY updated_at DESC').all(workspaceId) as SessionRow[];
+  return rows.map(mapRowToSession);
+}
+
 function mapRowToSession(row: SessionRow): Session {
   return {
     id: row.id,
     preconfigId: row.preconfig_id,
+    workspaceId: row.workspace_id || '',
     title: row.title,
     status: row.status as SessionStatus,
     createdAt: row.created_at,

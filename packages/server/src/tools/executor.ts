@@ -1,5 +1,7 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
+import { homedir } from 'os';
+import { existsSync } from 'fs';
 import type { ToolRuntime } from '@jean/shared';
 import type { DiscoveredTool, ToolResult } from './types';
 
@@ -13,18 +15,50 @@ const RUNTIME_COMMANDS: Record<ToolRuntime, string[]> = {
   powershell: ['pwsh', '-File'],
 };
 
+/**
+ * Expands ~ in paths to the user's home directory
+ */
+function expandPath(path: string): string {
+  if (path.startsWith('~/')) {
+    return path.replace('~', homedir());
+  }
+  return path;
+}
+
+export interface ExecuteToolOptions {
+  tool: DiscoveredTool;
+  args: Record<string, unknown>;
+  workspacePath?: string;
+  timeout?: number;
+}
+
 export async function executeTool(
-  tool: DiscoveredTool,
-  args: Record<string, unknown>,
-  timeout: number = 30000
+  options: ExecuteToolOptions
 ): Promise<ToolResult> {
-  const { definition, path } = tool;
-  const scriptPath = join(path, definition.script);
+  const { tool, args, workspacePath, timeout = 30000 } = options;
+  const { definition, path: toolPath } = tool;
+  const scriptPath = join(toolPath, definition.script);
   
   const runtimeCmd = RUNTIME_COMMANDS[definition.runtime];
   const command = definition.runtime === 'binary' 
     ? [scriptPath]
     : [...runtimeCmd, scriptPath];
+  
+  // Determine the working directory for tool execution
+  let cwd: string;
+  if (workspacePath) {
+    const expandedWorkspacePath = expandPath(workspacePath);
+    // Validate that the workspace path exists
+    if (!existsSync(expandedWorkspacePath)) {
+      return {
+        success: false,
+        error: `Workspace path does not exist: ${expandedWorkspacePath}`,
+      };
+    }
+    cwd = expandedWorkspacePath;
+  } else {
+    cwd = process.cwd();
+  }
   
   return new Promise((resolve) => {
     let stdout = '';
@@ -32,7 +66,7 @@ export async function executeTool(
     let timedOut = false;
     
     const proc = spawn(command[0], command.slice(1), {
-      cwd: path,
+      cwd,
       env: { ...process.env },
       stdio: ['pipe', 'pipe', 'pipe'],
     });

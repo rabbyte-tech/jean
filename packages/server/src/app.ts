@@ -9,6 +9,9 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
+import { mkdirSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 
 // Import types from shared
 import type {
@@ -22,10 +25,18 @@ import {
   listSessions,
   updateSession,
   deleteSession,
-} from './store/sessions';
+  listSessionsByWorkspace,
+} from '@/store';
+import {
+  listWorkspaces,
+  getWorkspace,
+  createWorkspace,
+  updateWorkspace,
+  deleteWorkspace,
+} from '@/store';
 import {
   listMessages,
-} from './store/messages';
+} from '@/store';
 
 // Import preconfig operations
 import {
@@ -119,6 +130,7 @@ export function createApp() {
     
     const session = createSession({
       id: body.id || crypto.randomUUID(),
+      workspaceId: body.workspaceId || '',
       preconfigId: body.preconfigId || null,
       title: body.title || 'New Session',
       status: 'active',
@@ -168,6 +180,117 @@ export function createApp() {
     }
     
     return c.json({ success: true });
+  });
+
+  // ============================================================================
+  // Workspaces API
+  // ============================================================================
+
+  // GET /api/workspaces - List all workspaces
+  app.get('/api/workspaces', async (c) => {
+    const workspaces = listWorkspaces();
+    return c.json({ workspaces });
+  });
+
+  // POST /api/workspaces - Create a new workspace
+  app.post('/api/workspaces', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+
+    const { name, path: providedPath, isVirtual } = body;
+
+    let path = providedPath;
+    
+    // Auto-generate path for virtual workspaces if not provided
+    if (isVirtual && !path) {
+      path = join(homedir(), '.jean2', 'workspaces', crypto.randomUUID());
+    }
+    
+    // Only reject if still no path (non-virtual workspaces require a path)
+    if (!path) {
+      return c.json({ error: 'Bad Request', message: 'Path is required for physical workspaces' }, 400);
+    }
+
+    // Create directory if it doesn't exist
+    try {
+      mkdirSync(path, { recursive: true });
+    } catch (err) {
+      console.error('Failed to create workspace directory:', err);
+      return c.json({ error: 'Internal Server Error', message: 'Failed to create workspace directory' }, 500);
+    }
+
+    const workspace = createWorkspace({
+      id: crypto.randomUUID(),
+      name: name || 'New Workspace',
+      path,
+      isVirtual: isVirtual || false,
+    });
+
+    return c.json({ workspace }, 201);
+  });
+
+  // GET /api/workspaces/:id - Get a workspace by ID
+  app.get('/api/workspaces/:id', async (c) => {
+    const id = c.req.param('id');
+    const workspace = getWorkspace(id);
+
+    if (!workspace) {
+      return c.json({ error: 'Not Found', message: 'Workspace not found' }, 404);
+    }
+
+    return c.json({ workspace });
+  });
+
+  // PATCH /api/workspaces/:id - Update a workspace (name only)
+  app.patch('/api/workspaces/:id', async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json().catch(() => ({}));
+
+    const { name } = body;
+
+    if (!name) {
+      return c.json({ error: 'Bad Request', message: 'Name is required' }, 400);
+    }
+
+    const workspace = updateWorkspace(id, { name });
+
+    if (!workspace) {
+      return c.json({ error: 'Not Found', message: 'Workspace not found' }, 404);
+    }
+
+    return c.json({ workspace });
+  });
+
+  // DELETE /api/workspaces/:id - Delete a workspace
+  app.delete('/api/workspaces/:id', async (c) => {
+    const id = c.req.param('id');
+
+    // Check if workspace exists
+    const workspace = getWorkspace(id);
+    if (!workspace) {
+      return c.json({ error: 'Not Found', message: 'Workspace not found' }, 404);
+    }
+
+    const deleted = deleteWorkspace(id);
+
+    if (!deleted) {
+      return c.json({ error: 'Internal Server Error', message: 'Failed to delete workspace' }, 500);
+    }
+
+    return c.json({ success: true });
+  });
+
+  // GET /api/workspaces/:id/sessions - List sessions in a workspace
+  app.get('/api/workspaces/:id/sessions', async (c) => {
+    const workspaceId = c.req.param('id');
+
+    // Verify workspace exists
+    const workspace = getWorkspace(workspaceId);
+    if (!workspace) {
+      return c.json({ error: 'Not Found', message: 'Workspace not found' }, 404);
+    }
+
+    const sessions = listSessionsByWorkspace(workspaceId);
+    return c.json({ sessions });
   });
 
   // ============================================================================

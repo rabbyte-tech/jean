@@ -1,5 +1,5 @@
 import { readdir, readFile } from 'fs/promises';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import type { ToolDefinition } from '@jean/shared';
 import type { DiscoveredTool } from './types';
 
@@ -12,13 +12,16 @@ const CACHE_TTL = 60000; // 1 minute cache
 export async function scanTools(toolsPath: string = DEFAULT_TOOLS_PATH): Promise<DiscoveredTool[]> {
   const tools: DiscoveredTool[] = [];
   
+  // Resolve to absolute path to ensure tool paths are absolute
+  const absoluteToolsPath = resolve(toolsPath);
+  
   try {
-    const entries = await readdir(toolsPath, { withFileTypes: true });
+    const entries = await readdir(absoluteToolsPath, { withFileTypes: true });
     
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
       
-      const toolDir = join(toolsPath, entry.name);
+      const toolDir = join(absoluteToolsPath, entry.name);
       const toolJsonPath = join(toolDir, 'tool.json');
       
       try {
@@ -41,7 +44,7 @@ export async function scanTools(toolsPath: string = DEFAULT_TOOLS_PATH): Promise
     }
   } catch (_e) {
     // Tools directory doesn't exist yet
-    console.warn(`Tools directory not found: ${toolsPath}`);
+    console.warn(`Tools directory not found: ${absoluteToolsPath}`);
   }
   
   // Update cache

@@ -2,6 +2,7 @@ export type SessionStatus = 'active' | 'closed';
 
 export interface Session {
   id: string;
+  workspaceId: string;  // FK to workspace
   preconfigId: string | null;
   title: string | null;
   status: SessionStatus;

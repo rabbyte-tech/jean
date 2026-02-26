@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock } from '@jean/shared';
+import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock, Workspace } from '@jean/shared';
 import SessionList from '@/components/SessionList';
 import ChatView from '@/components/ChatView';
 import './App.css';
@@ -9,7 +9,7 @@ const API_URL = `http://${window.location.hostname}:3000/api`;
 
 // Type for client message payloads based on message type
 type ClientMessagePayload = 
-  | { preconfigId?: string; title?: string }
+  | { preconfigId?: string; title?: string; workspaceId?: string }
   | { sessionId: string }
   | { sessionId: string; content: string }
   | { toolCallId: string; approved: boolean }
@@ -39,6 +39,8 @@ function App() {
     providerName: string;
   }>>([]);
   const [defaultModel, setDefaultModel] = useState<string>('gpt-4o');
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
 
   // Ref to store the latest handleServerMessage for the WebSocket
   const handleServerMessageRef = useRef<((msg: ServerMessage) => void) | null>(null);
@@ -88,6 +90,86 @@ function App() {
       })
       .catch(console.error);
   }, []);
+
+  // Create default workspace helper
+  const createDefaultWorkspace = async () => {
+    const res = await fetch(`${API_URL}/workspaces`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'My Virtual Workspace',
+        path: '', // Let server generate path
+        isVirtual: true,
+      }),
+    });
+    const data = await res.json();
+    setWorkspaces([data.workspace]);
+    setActiveWorkspace(data.workspace);
+  };
+
+  // Load workspaces on mount
+  useEffect(() => {
+    fetch(`${API_URL}/workspaces`)
+      .then(res => res.json())
+      .then(data => {
+        setWorkspaces(data.workspaces);
+        // If no workspaces exist, create a default virtual workspace
+        if (data.workspaces.length === 0) {
+          createDefaultWorkspace();
+        } else {
+          // Set first workspace as active, or restore from localStorage
+          const savedId = localStorage.getItem('activeWorkspaceId');
+          const saved = data.workspaces.find((w: Workspace) => w.id === savedId);
+          setActiveWorkspace(saved || data.workspaces[0]);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  // Persist active workspace to localStorage
+  useEffect(() => {
+    if (activeWorkspace) {
+      localStorage.setItem('activeWorkspaceId', activeWorkspace.id);
+    }
+  }, [activeWorkspace]);
+
+
+  // Workspace CRUD functions
+  const createWorkspace = async (name: string, path: string, isVirtual: boolean) => {
+    const res = await fetch(`${API_URL}/workspaces`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, path, isVirtual }),
+    });
+    const data = await res.json();
+    setWorkspaces(prev => [...prev, data.workspace]);
+    return data.workspace;
+  };
+
+  const selectWorkspace = (workspace: Workspace) => {
+    setActiveWorkspace(workspace);
+    setCurrentSession(null); // Clear current session when switching workspace
+  };
+
+  const deleteWorkspace = async (id: string) => {
+    await fetch(`${API_URL}/workspaces/${id}`, { method: 'DELETE' });
+    setWorkspaces(prev => prev.filter(w => w.id !== id));
+    if (activeWorkspace?.id === id) {
+      setActiveWorkspace(workspaces[0] || null);
+    }
+  };
+
+  const handleCreateVirtualWorkspace = async () => {
+    const name = `Workspace ${workspaces.length + 1}`;
+    const path = `~/.jean2/workspaces/${crypto.randomUUID()}`;
+    await createWorkspace(name, path, true);
+  };
+
+  const handleCreatePhysicalWorkspace = async (path: string) => {
+    // Extract folder name from path for the workspace name
+    const name = path.split('/').pop() || path.split('\\').pop() || 'Workspace';
+    await createWorkspace(name, path, false);
+  };
 
   const handleServerMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
@@ -391,8 +473,8 @@ function App() {
   }, [ws]);
 
   const createSession = useCallback((preconfigId?: string, title?: string) => {
-    sendMessage('session.create', { preconfigId, title });
-  }, [sendMessage]);
+    sendMessage('session.create', { preconfigId, title, workspaceId: activeWorkspace?.id });
+  }, [sendMessage, activeWorkspace]);
 
   const resumeSession = useCallback((sessionId: string) => {
     sendMessage('session.resume', { sessionId });
@@ -458,17 +540,28 @@ function App() {
     });
   }, [currentSession, sendMessage]);
 
+  // Filter sessions by active workspace
+  const workspaceSessions = sessions.filter(s => s.workspaceId === activeWorkspace?.id);
+
   return (
     <div className="app">
       <aside className="sidebar">
         <SessionList
-          sessions={sessions}
+          sessions={workspaceSessions}
           preconfigs={preconfigs}
           currentSession={currentSession}
           connected={connected}
           onCreateSession={createSession}
           onResumeSession={resumeSession}
           onCloseSession={closeSession}
+          
+          // Workspace props
+          workspaces={workspaces}
+          activeWorkspace={activeWorkspace}
+          onSelectWorkspace={selectWorkspace}
+          onCreateVirtualWorkspace={handleCreateVirtualWorkspace}
+          onCreatePhysicalWorkspace={handleCreatePhysicalWorkspace}
+          onDeleteWorkspace={deleteWorkspace}
         />
       </aside>
       <main className="main">

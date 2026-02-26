@@ -103,6 +103,7 @@ export interface ChatOptions {
   messages: Message[];
   modelId?: string;  // Override model from session/preconfig
   providerId?: string;  // Directly from session
+  workspacePath?: string;  // Workspace path for tool execution
   onDelta?: (delta: string) => void;
   onToolCall?: (toolCall: ToolCallBlock) => void;
   onToolApprovalRequired?: (toolCall: ToolCallBlock, dangerous: boolean) => Promise<boolean>;
@@ -214,6 +215,7 @@ async function convertToAiSdkMessages(messages: Message[]): Promise<ModelMessage
 
 async function buildAiSdkTools(
   toolNames: string[],
+  workspacePath: string | undefined,
   onToolApprovalRequired?: (toolCall: ToolCallBlock, dangerous: boolean) => Promise<boolean>
 ): Promise<Record<string, Tool>> {
   const tools: Record<string, Tool> = {};
@@ -264,8 +266,8 @@ async function buildAiSdkTools(
           };
         }
 
-        // Execute the tool
-        const execResult = await executeTool(discoveredTool, args);
+        // Execute the tool with workspacePath
+        const execResult = await executeTool({ tool: discoveredTool, args, workspacePath });
         if (!execResult.success) {
           return { error: execResult.error };
         }
@@ -286,14 +288,14 @@ export async function* streamChat(options: ChatOptions): AsyncGenerator<
   | { type: 'usage'; usage: { promptTokens: number; completionTokens: number; totalTokens: number }; model: string }
   | { type: 'complete'; message: Message }
 > {
-  const { sessionId: _sessionId, preconfig, messages, onToolApprovalRequired, modelId, providerId } = options;
+  const { sessionId: _sessionId, preconfig, messages, onToolApprovalRequired, modelId, providerId, workspacePath } = options;
 
   // Resolve model: session override > preconfig > env default
   const resolvedModelId = modelId || (preconfig.model ?? undefined);
   const model = await getModel(resolvedModelId, providerId);
 
   const toolNames = preconfig.tools || [];
-  const aiTools = await buildAiSdkTools(toolNames, onToolApprovalRequired);
+  const aiTools = await buildAiSdkTools(toolNames, workspacePath, onToolApprovalRequired);
 
   // Build system message
   const systemMessage = preconfig.systemPrompt;

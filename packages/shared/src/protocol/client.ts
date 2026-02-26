@@ -1,5 +1,6 @@
 export interface SessionCreateMessage {
   type: 'session.create';
+  workspaceId?: string;
   preconfigId?: string;
   title?: string;
 }

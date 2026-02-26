@@ -29,8 +29,20 @@ export function closeDatabase(): void {
 
 function initializeSchema(db: Database): void {
   db.run(`
+    CREATE TABLE IF NOT EXISTS workspaces (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      path TEXT NOT NULL,
+      is_virtual INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY,
+      workspace_id TEXT NOT NULL,
       preconfig_id TEXT,
       title TEXT,
       status TEXT NOT NULL DEFAULT 'active',
@@ -41,7 +53,8 @@ function initializeSchema(db: Database): void {
       selected_provider TEXT,
       prompt_tokens INTEGER DEFAULT 0,
       completion_tokens INTEGER DEFAULT 0,
-      total_tokens INTEGER DEFAULT 0
+      total_tokens INTEGER DEFAULT 0,
+      FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
     )
   `);
   
@@ -97,3 +110,4 @@ export * from './sessions';
 export * from './messages';
 export * from './tool-executions';
 export * from './tool-approvals';
+export * from './workspaces';

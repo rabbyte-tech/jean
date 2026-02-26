@@ -5,6 +5,7 @@ import { closeDatabase } from './store';
 import type { ServerMessage, ClientMessage, Message, ToolCallBlock } from '@jean/shared';
 import { createSession, getSession, updateSession } from '@/store';
 import { listMessages, createMessage } from '@/store';
+import { getWorkspace } from '@/store/workspaces';
 import { streamChat } from './core/agent';
 import { createPendingApproval, resolveApproval } from './core/approvals';
 import { getModelsConfig, findModel } from './config';
@@ -136,6 +137,7 @@ async function handleClientMessage(ws: ServerWebSocket, msg: ClientMessage): Pro
     case 'session.create': {
       const session = createSession({
         id: crypto.randomUUID(),
+        workspaceId: msg.workspaceId || '',
         preconfigId: msg.preconfigId || null,
         title: msg.title || 'New Session',
         status: 'active',
@@ -224,6 +226,10 @@ async function handleChat(ws: ServerWebSocket, sessionId: string, content: strin
     send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
     return;
   }
+  
+  // Get workspace path for tool execution
+  const workspace = session.workspaceId ? getWorkspace(session.workspaceId) : null;
+  const workspacePath = workspace?.path;
   
   // Get preconfig (for default model)
   const preconfig = session.preconfigId 
@@ -332,6 +338,7 @@ async function handleChat(ws: ServerWebSocket, sessionId: string, content: strin
       onToolApprovalRequired,
       modelId: modelId,
       providerId: provider,
+      workspacePath,
     })) {
       switch (event.type) {
         case 'delta':
