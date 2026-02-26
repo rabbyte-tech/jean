@@ -99,6 +99,12 @@ export default function ChatView({ session, messages, preconfigs, models, defaul
       </header>
       
       <div className="messages">
+        {session.status === 'closed' && (
+          <div className="archived-banner">
+            <span>This session is archived</span>
+            <span className="archived-hint">You can reopen it from the sessions panel</span>
+          </div>
+        )}
         {messages.length === 0 ? (
           <div className="no-messages">
             Start a conversation by sending a message below.
@@ -111,16 +117,18 @@ export default function ChatView({ session, messages, preconfigs, models, defaul
         <div ref={messagesEndRef} />
       </div>
       
-      <form className="input-area" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-          autoFocus
-        />
-        <button type="submit">Send</button>
-      </form>
+      {session.status === 'active' && (
+        <form className="input-area" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type a message..."
+            autoFocus
+          />
+          <button type="submit">Send</button>
+        </form>
+      )}
     </div>
   );
 }

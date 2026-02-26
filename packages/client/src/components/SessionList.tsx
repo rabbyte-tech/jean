@@ -10,6 +10,10 @@ interface Props {
   onCreateSession: (preconfigId?: string, title?: string) => void;
   onResumeSession: (sessionId: string) => void;
   onCloseSession: (sessionId: string) => void;
+  onReopenSession: (sessionId: string) => void;
+  onPermanentlyDeleteSession: (sessionId: string) => void;
+  sessionFilter: 'active' | 'all';
+  onSetSessionFilter: (filter: 'active' | 'all') => void;
   
   // Workspace props
   workspaces: Workspace[];
@@ -28,6 +32,10 @@ export default function SessionList({
   onCreateSession,
   onResumeSession,
   onCloseSession,
+  onReopenSession,
+  onPermanentlyDeleteSession,
+  sessionFilter,
+  onSetSessionFilter,
   workspaces,
   activeWorkspace,
   onSelectWorkspace,
@@ -36,6 +44,11 @@ export default function SessionList({
   onDeleteWorkspace,
 }: Props) {
   const defaultPreconfig = preconfigs.find(p => p.isDefault) || preconfigs[0];
+  
+  // Filter sessions based on the current filter
+  const filteredSessions = sessionFilter === 'active' 
+    ? sessions.filter(s => s.status === 'active')
+    : sessions.filter(s => s.status === 'closed');
   
   return (
     <div className="session-list">
@@ -64,24 +77,68 @@ export default function SessionList({
         + New Session
       </button>
       
+      <div className="session-tabs">
+        <button 
+          className={`session-tab ${sessionFilter === 'active' ? 'active' : ''}`}
+          onClick={() => onSetSessionFilter('active')}
+        >
+          Active
+        </button>
+        <button 
+          className={`session-tab ${sessionFilter === 'all' ? 'active' : ''}`}
+          onClick={() => onSetSessionFilter('all')}
+        >
+          Archived
+        </button>
+      </div>
+      
       <div className="sessions">
-        {sessions.map(session => (
+        {filteredSessions.map(session => (
           <div
             key={session.id}
-            className={`session-item ${currentSession?.id === session.id ? 'active' : ''}`}
+            className={`session-item ${currentSession?.id === session.id ? 'active' : ''} ${session.status === 'closed' ? 'archived' : ''}`}
             onClick={() => onResumeSession(session.id)}
           >
             <span className="session-title">{session.title || 'Untitled'}</span>
             <span className="session-status">{session.status}</span>
-            <button
-              className="close-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCloseSession(session.id);
-              }}
-            >
-              ×
-            </button>
+            {session.status === 'closed' ? (
+              <>
+                <button
+                  className="reopen-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReopenSession(session.id);
+                  }}
+                  title="Reopen session"
+                >
+                  ↻
+                </button>
+                <button
+                  className="delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const sessionTitle = session.title || 'Untitled';
+                    if (confirm(`Are you sure you want to permanently delete "${sessionTitle}"?\n\nThis action cannot be undone.`)) {
+                      onPermanentlyDeleteSession(session.id);
+                    }
+                  }}
+                  title="Delete permanently"
+                >
+                  🗑
+                </button>
+              </>
+            ) : (
+              <button
+                className="close-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCloseSession(session.id);
+                }}
+                title="Archive session"
+              >
+                ×
+              </button>
+            )}
           </div>
         ))}
       </div>

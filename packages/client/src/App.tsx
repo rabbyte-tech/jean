@@ -41,6 +41,7 @@ function App() {
   const [defaultModel, setDefaultModel] = useState<string>('gpt-4o');
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
+  const [sessionFilter, setSessionFilter] = useState<'active' | 'all'>('active');
 
   // Ref to store the latest handleServerMessage for the WebSocket
   const handleServerMessageRef = useRef<((msg: ServerMessage) => void) | null>(null);
@@ -132,6 +133,19 @@ function App() {
       localStorage.setItem('activeWorkspaceId', activeWorkspace.id);
     }
   }, [activeWorkspace]);
+
+  // Restore session filter from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('sessionFilter');
+    if (saved === 'active' || saved === 'all') {
+      setSessionFilter(saved);
+    }
+  }, []);
+
+  // Persist session filter to localStorage
+  useEffect(() => {
+    localStorage.setItem('sessionFilter', sessionFilter);
+  }, [sessionFilter]);
 
 
   // Workspace CRUD functions
@@ -436,6 +450,36 @@ function App() {
         break;
       
       case 'session.closed':
+        // Update the session status to 'closed' instead of removing it
+        setSessions(prev => prev.map(s => 
+          s.id === msg.sessionId ? { ...s, status: 'closed' } : s
+        ));
+        // Clear that session's messages from the map
+        setMessagesBySession(prev => {
+          const newMap = { ...prev };
+          delete newMap[msg.sessionId];
+          return newMap;
+        });
+        if (currentSession?.id === msg.sessionId) {
+          setCurrentSession(null);
+        }
+        break;
+
+      case 'session.reopened':
+        // Update the session in the sessions list (it's now active again)
+        setSessions(prev => prev.map(s => 
+          s.id === msg.session.id ? msg.session : s
+        ));
+        // Update current session if it matches
+        if (currentSession?.id === msg.session.id) {
+          setCurrentSession(msg.session);
+        }
+        // Auto-switch to Active tab so user sees the reopened session
+        setSessionFilter('active');
+        break;
+
+      case 'session.deleted':
+        // Permanently remove session from state
         setSessions(prev => prev.filter(s => s.id !== msg.sessionId));
         // Clear that session's messages from the map
         setMessagesBySession(prev => {
@@ -482,6 +526,14 @@ function App() {
 
   const closeSession = useCallback((sessionId: string) => {
     sendMessage('session.close', { sessionId });
+  }, [sendMessage]);
+
+  const reopenSession = useCallback((sessionId: string) => {
+    sendMessage('session.reopen', { sessionId });
+  }, [sendMessage]);
+
+  const permanentlyDeleteSession = useCallback((sessionId: string) => {
+    sendMessage('session.delete', { sessionId });
   }, [sendMessage]);
 
   const updateSessionPreconfig = useCallback((preconfigId: string) => {
@@ -554,6 +606,12 @@ function App() {
           onCreateSession={createSession}
           onResumeSession={resumeSession}
           onCloseSession={closeSession}
+          
+          // NEW PROPS:
+          sessionFilter={sessionFilter}
+          onSetSessionFilter={setSessionFilter}
+          onReopenSession={reopenSession}
+          onPermanentlyDeleteSession={permanentlyDeleteSession}
           
           // Workspace props
           workspaces={workspaces}

@@ -40,6 +40,16 @@ export interface SessionUpdateModelMessage {
   providerId: string;
 }
 
+export interface SessionReopenMessage {
+  type: 'session.reopen';
+  sessionId: string;
+}
+
+export interface SessionDeleteMessage {
+  type: 'session.delete';
+  sessionId: string;
+}
+
 export type ClientMessage = 
   | SessionCreateMessage 
   | SessionResumeMessage 
@@ -47,4 +57,6 @@ export type ClientMessage =
   | ToolApprovalMessage 
   | SessionCloseMessage
   | SessionUpdateMessage
-  | SessionUpdateModelMessage;
+  | SessionUpdateModelMessage
+  | SessionReopenMessage
+  | SessionDeleteMessage;

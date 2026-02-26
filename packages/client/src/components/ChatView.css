@@ -119,3 +119,33 @@
   outline: none;
   border-color: #4a9eff;
 }
+
+/* Archived session styles */
+.archived-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: #3d3520;
+  border-bottom: 1px solid #5a4d2e;
+  color: #d4a84b;
+  font-size: 13px;
+}
+
+.archived-hint {
+  font-size: 11px;
+  color: #9a8a4b;
+  margin-top: 4px;
+}
+
+.input-area input:disabled {
+  background: #252525;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.input-area button:disabled {
+  background: #3a5a80;
+  cursor: not-allowed;
+  opacity: 0.7;
+}

@@ -3,7 +3,7 @@ import { initializePreconfigs, getPreconfig, getDefaultPreconfig } from './core/
 import { scanTools } from './tools';
 import { closeDatabase } from './store';
 import type { ServerMessage, ClientMessage, Message, ToolCallBlock } from '@jean/shared';
-import { createSession, getSession, updateSession } from '@/store';
+import { createSession, getSession, updateSession, deleteSession } from '@/store';
 import { listMessages, createMessage } from '@/store';
 import { getWorkspace } from '@/store/workspaces';
 import { streamChat } from './core/agent';
@@ -201,6 +201,28 @@ async function handleClientMessage(ws: ServerWebSocket, msg: ClientMessage): Pro
       send(ws, { type: 'session.closed', sessionId: msg.sessionId });
       break;
     }
+
+    case 'session.reopen': {
+      const session = getSession(msg.sessionId);
+      if (!session) {
+        send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
+        break;
+      }
+      const updated = updateSession(msg.sessionId, { status: 'active' });
+      send(ws, { type: 'session.reopened', session: updated! });
+      break;
+    }
+
+    case 'session.delete': {
+      const session = getSession(msg.sessionId);
+      if (!session) {
+        send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
+        break;
+      }
+      deleteSession(msg.sessionId);
+      send(ws, { type: 'session.deleted', sessionId: msg.sessionId });
+      break;
+    }
     
     case 'chat.message': {
       await handleChat(ws, msg.sessionId, msg.content);
@@ -224,6 +246,12 @@ async function handleChat(ws: ServerWebSocket, sessionId: string, content: strin
   const session = getSession(sessionId);
   if (!session) {
     send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
+    return;
+  }
+  
+  // Prevent sending messages to closed/archived sessions
+  if (session.status === 'closed') {
+    send(ws, { type: 'error', code: 'session_closed', message: 'Cannot send messages to an archived session. Reopen it first.' });
     return;
   }
   

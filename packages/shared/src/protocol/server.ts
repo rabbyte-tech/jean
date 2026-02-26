@@ -76,6 +76,16 @@ export interface SessionUpdatedMessage {
   session: Session;
 }
 
+export interface SessionReopenedMessage {
+  type: 'session.reopened';
+  session: Session;
+}
+
+export interface SessionDeletedMessage {
+  type: 'session.deleted';
+  sessionId: string;
+}
+
 export interface ChatUsageMessage {
   type: 'chat.usage';
   sessionId: string;
@@ -105,5 +115,7 @@ export type ServerMessage =
   | ErrorMessage
   | SessionClosedMessage
   | SessionUpdatedMessage
+  | SessionReopenedMessage
+  | SessionDeletedMessage
   | ChatUsageMessage
   | ChatUserMessageMessage;
