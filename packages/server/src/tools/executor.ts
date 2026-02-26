@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import { join } from 'path';
 import { homedir } from 'os';
 import { existsSync } from 'fs';
-import type { ToolRuntime } from '@jean/shared';
+import type { ToolRuntime } from '@jean2/shared';
 import type { DiscoveredTool, ToolResult } from './types';
 
 const RUNTIME_COMMANDS: Record<ToolRuntime, string[]> = {

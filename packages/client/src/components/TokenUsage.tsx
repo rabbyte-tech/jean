@@ -1,4 +1,4 @@
-import { getModelContextWindow } from '@jean/shared';
+import { getModelContextWindow } from '@jean2/shared';
 import './TokenUsage.css';
 
 interface TokenUsageProps {

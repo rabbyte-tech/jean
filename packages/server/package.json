@@ -1,5 +1,5 @@
 {
-  "name": "@jean/server",
+  "name": "@jean2/server",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@jean/shared": "workspace:*",
+    "@jean2/shared": "workspace:*",
     "@ai-sdk/anthropic": "^1.0.0",
     "@ai-sdk/google": "^1.0.0",
     "@ai-sdk/openai": "^1.0.0",

@@ -1,4 +1,4 @@
-import type { Session, Preconfig, Workspace } from '@jean/shared';
+import type { Session, Preconfig, Workspace } from '@jean2/shared';
 import WorkspaceSelector from './WorkspaceSelector';
 import './SessionList.css';
 

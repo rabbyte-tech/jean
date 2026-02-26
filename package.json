@@ -1,8 +1,8 @@
 {
-  "name": "jean",
+  "name": "jean2",
   "version": "0.1.0",
   "private": true,
-  "description": "Jean - AI Agent Monorepo",
+  "description": "Jean2 - AI Agent Monorepo",
   "workspaces": [
     "packages/*"
   ],

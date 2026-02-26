@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { Session, Message, Preconfig } from '@jean/shared';
+import type { Session, Message, Preconfig } from '@jean2/shared';
 import MessageComponent from '@/components/Message';
 import TokenUsage from '@/components/TokenUsage';
 import ModelSelector from '@/components/ModelSelector';

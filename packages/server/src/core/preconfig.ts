@@ -1,7 +1,7 @@
 import { readdir, readFile, writeFile, unlink, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
-import type { Preconfig } from '@jean/shared';
+import type { Preconfig } from '@jean2/shared';
 import { randomUUID } from 'crypto';
 
 const PRECONFIGS_DIR = process.env.PRECONFIGS_PATH || join(homedir(), '.jean2', 'preconfigs');
@@ -22,7 +22,7 @@ const DEFAULT_PRECONFIGS: Preconfig[] = [
     name: 'Reader',
     description: 'Read-only agent for exploring codebases and documents',
     systemPrompt: 'You are a helpful assistant focused on reading and understanding files. You have access to tools for reading files, searching content, and exploring directory structures. Be thorough and precise in your analysis.' + TOOL_REJECTION_HANDLING,
-    tools: ['read-file', 'glob', 'grep'],
+    tools: ['read-file', 'glob', 'grep', 'webfetch'],
     model: null,
     provider: null,
     settings: { temperature: 0.5 },
@@ -33,7 +33,7 @@ const DEFAULT_PRECONFIGS: Preconfig[] = [
     name: 'Coder',
     description: 'Full-featured agent for writing and modifying code',
     systemPrompt: 'You are a skilled software developer assistant. You can read, write, and modify files, and execute shell commands. Write clean, well-documented code. Test your changes when appropriate.' + TOOL_REJECTION_HANDLING,
-    tools: ['read-file', 'write-file', 'shell', 'glob', 'grep'],
+    tools: ['read-file', 'write-file', 'shell', 'glob', 'grep', 'webfetch'],
     model: null,
     provider: null,
     settings: { temperature: 0.3 },

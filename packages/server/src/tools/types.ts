@@ -1,4 +1,4 @@
-import type { ToolDefinition, ToolRuntime } from '@jean/shared';
+import type { ToolDefinition, ToolRuntime } from '@jean2/shared';
 
 export type { ToolDefinition, ToolRuntime };
 

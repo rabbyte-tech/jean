@@ -2,7 +2,7 @@ import { createApp } from './app';
 import { initializePreconfigs, getPreconfig, getDefaultPreconfig } from './core/preconfig';
 import { scanTools } from './tools';
 import { closeDatabase } from './store';
-import type { ServerMessage, ClientMessage, Message, ToolCallBlock } from '@jean/shared';
+import type { ServerMessage, ClientMessage, Message, ToolCallBlock } from '@jean2/shared';
 import { createSession, getSession, updateSession, deleteSession } from '@/store';
 import { listMessages, createMessage } from '@/store';
 import { getWorkspace } from '@/store/workspaces';

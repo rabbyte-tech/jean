@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock, Workspace } from '@jean/shared';
+import type { Session, Message, ServerMessage, ClientMessage, Preconfig, ToolCallBlock, Workspace } from '@jean2/shared';
 import SessionList from '@/components/SessionList';
 import ChatView from '@/components/ChatView';
 import './App.css';

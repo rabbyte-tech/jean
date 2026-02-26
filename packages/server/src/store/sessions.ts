@@ -1,5 +1,5 @@
 import { getDatabase } from './index';
-import type { Session, SessionStatus, Workspace } from '@jean/shared';
+import type { Session, SessionStatus, Workspace } from '@jean2/shared';
 import { getWorkspace } from './workspaces';
 
 // Interface for raw database row from sessions table

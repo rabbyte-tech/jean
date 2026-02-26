@@ -1,4 +1,4 @@
-# Jean
+# Jean2
 
 A monorepo for building and deploying AI agent applications with a modern tech stack.
 

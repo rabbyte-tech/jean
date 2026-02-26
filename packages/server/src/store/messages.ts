@@ -1,5 +1,5 @@
 import { getDatabase } from './index';
-import type { Message, ContentBlock } from '@jean/shared';
+import type { Message, ContentBlock } from '@jean2/shared';
 
 // Interface for raw database row from messages table
 interface MessageRow {

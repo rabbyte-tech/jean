@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Message as MessageType, ContentBlock, ToolCallBlock, ToolResultBlock } from '@jean/shared';
+import type { Message as MessageType, ContentBlock, ToolCallBlock, ToolResultBlock } from '@jean2/shared';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import './Message.css';
 

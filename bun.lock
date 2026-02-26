@@ -14,10 +14,10 @@
       },
     },
     "packages/client": {
-      "name": "@jean/client",
+      "name": "@jean2/client",
       "version": "0.1.0",
       "dependencies": {
-        "@jean/shared": "workspace:*",
+        "@jean2/shared": "workspace:*",
         "prism-react-renderer": "^2.4.1",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
@@ -33,13 +33,13 @@
       },
     },
     "packages/server": {
-      "name": "@jean/server",
+      "name": "@jean2/server",
       "version": "1.0.0",
       "dependencies": {
         "@ai-sdk/anthropic": "^1.0.0",
         "@ai-sdk/google": "^1.0.0",
         "@ai-sdk/openai": "^1.0.0",
-        "@jean/shared": "workspace:*",
+        "@jean2/shared": "workspace:*",
         "@openrouter/ai-sdk-provider": "^2.2.3",
         "ai": "^6.0.0",
         "hono": "^4.0.0",
@@ -52,7 +52,7 @@
       },
     },
     "packages/shared": {
-      "name": "@jean/shared",
+      "name": "@jean2/shared",
       "version": "0.1.0",
     },
   },
@@ -183,11 +183,11 @@
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
 
-    "@jean/client": ["@jean/client@workspace:packages/client"],
+    "@jean2/client": ["@jean2/client@workspace:packages/client"],
 
-    "@jean/server": ["@jean/server@workspace:packages/server"],
+    "@jean2/server": ["@jean2/server@workspace:packages/server"],
 
-    "@jean/shared": ["@jean/shared@workspace:packages/shared"],
+    "@jean2/shared": ["@jean2/shared@workspace:packages/shared"],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 

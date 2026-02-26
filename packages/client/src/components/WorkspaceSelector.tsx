@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { Workspace } from '@jean/shared';
+import type { Workspace } from '@jean2/shared';
 import './WorkspaceSelector.css';
 
 interface WorkspaceSelectorProps {

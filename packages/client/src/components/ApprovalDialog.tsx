@@ -1,4 +1,4 @@
-import type { ToolCallBlock } from '@jean/shared';
+import type { ToolCallBlock } from '@jean2/shared';
 import './ApprovalDialog.css';
 
 interface Props {

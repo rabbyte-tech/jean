@@ -16,7 +16,7 @@ import { join } from 'path';
 // Import types from shared
 import type {
   SessionStatus,
-} from '@jean/shared';
+} from '@jean2/shared';
 
 // Import store operations
 import {

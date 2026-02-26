@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'fs/promises';
 import { join, resolve } from 'path';
-import type { ToolDefinition } from '@jean/shared';
+import type { ToolDefinition } from '@jean2/shared';
 import type { DiscoveredTool } from './types';
 
 const DEFAULT_TOOLS_PATH = process.env.TOOLS_PATH || join(process.cwd(), 'data', 'tools');
