@@ -502,6 +502,17 @@ function App() {
           setCurrentSession(msg.session);
         }
         break;
+
+      case 'session.renamed':
+        // Update the session in the sessions list with the new title
+        setSessions(prev => prev.map(s => 
+          s.id === msg.session.id ? msg.session : s
+        ));
+        // Update current session if it matches
+        if (currentSession?.id === msg.session.id) {
+          setCurrentSession(msg.session);
+        }
+        break;
     }
   }, [currentSession, defaultModel]);
 
@@ -547,6 +558,10 @@ function App() {
       sendMessage('session.update_model', { sessionId: currentSession.id, modelId, providerId });
     }
   }, [currentSession, sendMessage]);
+
+  const handleRenameSession = useCallback((sessionId: string, title: string) => {
+    sendMessage('session.rename', { sessionId, title });
+  }, [sendMessage]);
 
   const sendChatMessage = useCallback((content: string) => {
     if (currentSession) {
@@ -634,6 +649,7 @@ function App() {
             onChangePreconfig={updateSessionPreconfig}
             onChangeModel={updateSessionModel}
             onApproveTool={handleToolApproval}
+            onRename={handleRenameSession}
             usage={sessionUsage}
             modelName={currentModel}
           />

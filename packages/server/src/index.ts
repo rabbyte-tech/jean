@@ -223,6 +223,22 @@ async function handleClientMessage(ws: ServerWebSocket, msg: ClientMessage): Pro
       send(ws, { type: 'session.deleted', sessionId: msg.sessionId });
       break;
     }
+
+    case 'session.rename': {
+      const session = getSession(msg.sessionId);
+      if (!session) {
+        send(ws, { type: 'error', code: 'not_found', message: 'Session not found' });
+        break;
+      }
+      const trimmedTitle = msg.title?.trim() ?? '';
+      if (!trimmedTitle) {
+        send(ws, { type: 'error', code: 'invalid_title', message: 'Title cannot be empty' });
+        break;
+      }
+      const updatedSession = updateSession(msg.sessionId, { title: trimmedTitle });
+      broadcast({ type: 'session.renamed', session: updatedSession! });
+      break;
+    }
     
     case 'chat.message': {
       await handleChat(ws, msg.sessionId, msg.content);

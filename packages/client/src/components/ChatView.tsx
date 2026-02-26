@@ -22,6 +22,7 @@ interface Props {
   onChangePreconfig: (preconfigId: string) => void;
   onChangeModel: (modelId: string, providerId: string) => void;
   onApproveTool: (toolCallId: string, approved: boolean) => void;
+  onRename: (sessionId: string, title: string) => void;
   usage: {
     promptTokens: number;
     completionTokens: number;
@@ -30,8 +31,11 @@ interface Props {
   modelName: string;
 }
 
-export default function ChatView({ session, messages, preconfigs, models, defaultModel, onSendMessage, onChangePreconfig, onChangeModel, onApproveTool, usage, modelName }: Props) {
+export default function ChatView({ session, messages, preconfigs, models, defaultModel, onSendMessage, onChangePreconfig, onChangeModel, onApproveTool, onRename, usage, modelName }: Props) {
   const [input, setInput] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [titleInputRef, setTitleInputRef] = useState<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Determine which model to show as selected
@@ -48,6 +52,35 @@ export default function ChatView({ session, messages, preconfigs, models, defaul
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
+  // Auto-focus and select text when entering edit mode
+  useEffect(() => {
+    if (isEditing && titleInputRef) {
+      titleInputRef.focus();
+      titleInputRef.select();
+    }
+  }, [isEditing, titleInputRef]);
+  
+  const handleTitleDoubleClick = () => {
+    setEditTitle(session.title || '');
+    setIsEditing(true);
+  };
+  
+  const handleTitleSubmit = () => {
+    const trimmedTitle = editTitle.trim();
+    if (trimmedTitle && trimmedTitle !== session.title) {
+      onRename(session.id, trimmedTitle);
+    }
+    setIsEditing(false);
+  };
+  
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSubmit();
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+    }
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
@@ -60,7 +93,24 @@ export default function ChatView({ session, messages, preconfigs, models, defaul
     <div className="chat-view">
       <header className="chat-header">
         <div className="chat-header-left">
-          <h2>{session.title || 'Untitled Session'}</h2>
+          {isEditing ? (
+            <input
+              ref={setTitleInputRef}
+              type="text"
+              className="chat-header-title-input"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleTitleSubmit}
+              onKeyDown={handleTitleKeyDown}
+            />
+          ) : (
+            <h2 
+              className="chat-header-title" 
+              onDoubleClick={handleTitleDoubleClick}
+            >
+              {session.title || 'Untitled Session'}
+            </h2>
+          )}
           <span className="session-id">{session.id.slice(0, 8)}</span>
         </div>
         <div className="chat-header-right">

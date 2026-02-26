@@ -50,6 +50,12 @@ export interface SessionDeleteMessage {
   sessionId: string;
 }
 
+export interface SessionRenameMessage {
+  type: 'session.rename';
+  sessionId: string;
+  title: string;
+}
+
 export type ClientMessage = 
   | SessionCreateMessage 
   | SessionResumeMessage 
@@ -59,4 +65,5 @@ export type ClientMessage =
   | SessionUpdateMessage
   | SessionUpdateModelMessage
   | SessionReopenMessage
-  | SessionDeleteMessage;
+  | SessionDeleteMessage
+  | SessionRenameMessage;

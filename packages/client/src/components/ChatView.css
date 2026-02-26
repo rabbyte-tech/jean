@@ -17,6 +17,32 @@
   font-weight: 600;
 }
 
+.chat-header-title {
+  cursor: pointer;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.chat-header-title:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.chat-header-title-input {
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  background: #2a2a2a;
+  border: 1px solid #4a9eff;
+  border-radius: 4px;
+  color: #e0e0e0;
+  outline: none;
+  min-width: 200px;
+}
+
 .session-id {
   font-size: 12px;
   color: #666;
